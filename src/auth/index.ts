@@ -20,6 +20,8 @@ export {
   requireAdminPanelWritePermissionForProducts,
   requireAdminPanelReadPermissionForWallets,
   requireAdminPanelWritePermissionForWallets,
+  requireAdminPanelReadPermissionForOrders,
+  requireAdminPanelWritePermissionForOrders,
   requireWalletReadPermission,
   requireWalletWritePermission,
   requireCartPermissions,

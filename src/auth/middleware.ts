@@ -269,6 +269,13 @@ export const requireAdminPanelWritePermissionForWallets = requireSessionPermissi
   "wallet_write", "admin_write"
 ]);
 
+export const requireAdminPanelReadPermissionForOrders = requireSessionPermissions([
+  "orders_read", "admin_read"
+]);
+export const requireAdminPanelWritePermissionForOrders = requireSessionPermissions([
+  "orders_write", "admin_write"
+]);
+
 export const requireWalletReadPermission = requireSessionPermissions([
   "wallet_read",
 ]);
