@@ -1,8 +1,11 @@
 import "reflect-metadata";
 import express from "express";
+import cors from "cors";
 import { config } from "dotenv";
 import { AppDataSource } from "./data-source";
 import { RedisClient } from "./cache/RedisClient";
+import { verifyBearer } from "./auth/verifyjwt";
+import { requireRoles } from "./auth/guards";
 
 // Load environment variables
 config();
@@ -11,6 +14,12 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Middleware
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -24,6 +33,10 @@ app.get("/health", (req, res) => {
     redis: redis.getClient().status,
   });
 });
+
+app.get("/api/testRole", verifyBearer, requireRoles(["admin"]), (req, res) =>
+  res.json({ ok: true })
+);
 
 // Basic route
 app.get("/", (req, res) => {
