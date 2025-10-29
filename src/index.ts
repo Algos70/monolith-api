@@ -6,10 +6,13 @@ import RedisStore from "connect-redis";
 import { config } from "dotenv";
 import { AppDataSource } from "./data-source";
 import { RedisClient } from "./cache/RedisClient";
-import { verifyBearer } from "./auth/verifyjwt";
-import { requireRoles } from "./auth/guards";
-import authRoutes, { requireAuth } from "./auth/authRoutes";
-import { verifyBearerWithIntrospection } from "./auth/verifyjwt";
+import { 
+  verifyBearer, 
+  verifyBearerWithIntrospection, 
+  requireAuth,
+  requireBearerRoles 
+} from "./auth/middleware";
+import { authRoutes } from "./rest";
 
 config();
 
@@ -26,12 +29,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Initialize Redis connection first
-const initializeRedis = async () => {
-  const redis = RedisClient.getInstance();
-  await redis.getClient().connect();
-  return redis.getClient();
-};
+
 
 // Session middleware with Redis - will be set up after Redis connection
 let sessionMiddleware: any;
@@ -50,7 +48,7 @@ app.get("/health", (req, res) => {
 // Routes will be added after session middleware is set up
 
 // Legacy JWT route (keeping for backward compatibility)
-app.get("/api/testRole", verifyBearer, requireRoles(["admin"]), (req, res) =>
+app.get("/api/testRole", verifyBearer, requireBearerRoles(["admin"]), (req, res) =>
   res.json({ ok: true })
 );
 
@@ -110,7 +108,7 @@ const startServer = async () => {
     });
 
     // High-security routes using token introspection
-    app.get("/api/admin/users", verifyBearerWithIntrospection, requireRoles(["admin"]), (req, res) => {
+    app.get("/api/admin/users", verifyBearerWithIntrospection, requireBearerRoles(["admin"]), (req, res) => {
       res.json({
         message: "Admin route with real-time token validation",
         users: [] // gerçek user data buraya
