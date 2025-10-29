@@ -172,7 +172,7 @@ export class AuthService {
 
   // Build redirect URLs
   getSuccessRedirectUrl(): string {
-    return `${this.config.frontendUrl}/dashboard`;
+    return `${this.config.frontendUrl}/`;
   }
 
   getErrorRedirectUrl(error: string = "auth_failed"): string {
