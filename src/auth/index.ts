@@ -16,6 +16,8 @@ export {
   requireAdminPanelWritePermissionForUser,
   requireAdminPanelReadPermissionForCategory,
   requireAdminPanelWritePermissionForCategory,
+  requireAdminPanelReadPermissionForProducts,
+  requireAdminPanelWritePermissionForProducts,
   requireWalletReadPermission,
   requireWalletWritePermission,
   requireCartPermissions,

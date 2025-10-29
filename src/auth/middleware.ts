@@ -255,6 +255,13 @@ export const requireAdminPanelWritePermissionForCategory = requireSessionPermiss
   "categories_write", "admin_write"
 ]);
 
+export const requireAdminPanelReadPermissionForProducts = requireSessionPermissions([
+  "products_read", "admin_read"
+]);
+export const requireAdminPanelWritePermissionForProducts = requireSessionPermissions([
+  "products_write", "admin_write"
+]);
+
 export const requireWalletReadPermission = requireSessionPermissions([
   "wallet_read",
 ]);
