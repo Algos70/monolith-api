@@ -11,13 +11,13 @@ export const orderTypeDefs = `
     items: [OrderItem!]!
   }
 
-  type OrderItem {
-    id: ID!
+
+
+  input CreateOrderItemForOrderInput {
+    productId: ID!
     qty: Int!
     unitPriceMinor: Int!
     currency: String!
-    product: Product!
-    order: Order!
   }
 
   input CreateOrderInput {
@@ -25,15 +25,10 @@ export const orderTypeDefs = `
     totalMinor: Int!
     currency: String!
     status: String
-    items: [CreateOrderItemInput!]!
+    items: [CreateOrderItemForOrderInput!]!
   }
 
-  input CreateOrderItemInput {
-    productId: ID!
-    qty: Int!
-    unitPriceMinor: Int!
-    currency: String!
-  }
+
 
   input UpdateOrderInput {
     totalMinor: Int

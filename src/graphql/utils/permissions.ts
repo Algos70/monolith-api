@@ -252,3 +252,16 @@ export const requireAdminPanelWritePermissionForOrders = (
   return requireAnyPermission(context, ["orders_write", "admin_write"]);
 };
 
+// Admin panel permission checks for order items (matching REST API middleware names)
+export const requireAdminPanelReadPermissionForOrderItems = (
+  context: GraphQLContext
+) => {
+  return requireAnyPermission(context, ["orders_read", "admin_read"]);
+};
+
+export const requireAdminPanelWritePermissionForOrderItems = (
+  context: GraphQLContext
+) => {
+  return requireAnyPermission(context, ["orders_write", "admin_write"]);
+};
+

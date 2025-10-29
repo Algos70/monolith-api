@@ -3,6 +3,7 @@ import { adminCategoryResolvers } from './adminCategoryResolvers';
 import { adminProductResolvers } from './adminProductResolvers';
 import { adminWalletResolvers } from './adminWalletResolvers';
 import { adminOrderResolvers } from './adminOrderResolvers';
+import { adminOrderItemResolvers } from './adminOrderItemResolvers';
 
 export const resolvers = {
   Query: {
@@ -10,12 +11,14 @@ export const resolvers = {
     ...adminCategoryResolvers.Query,
     ...adminProductResolvers.Query,
     ...adminWalletResolvers.Query,
-    ...adminOrderResolvers.Query
+    ...adminOrderResolvers.Query,
+    ...adminOrderItemResolvers.Query
   },
   Mutation: {
     ...adminCategoryResolvers.Mutation,
     ...adminProductResolvers.Mutation,
     ...adminWalletResolvers.Mutation,
-    ...adminOrderResolvers.Mutation
+    ...adminOrderResolvers.Mutation,
+    ...adminOrderItemResolvers.Mutation
   }
 };
