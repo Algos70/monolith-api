@@ -2,6 +2,7 @@ import { User } from "../entities/User";
 import { UserRepository } from "../repositories/UserRepository";
 
 export interface CreateUserData {
+  id?: string;
   email: string;
   name?: string;
 }
@@ -77,23 +78,33 @@ export class UserService {
 
   // Keycloak kullanıcısını senkronize et (yoksa oluştur, varsa güncelle)
   async syncKeycloakUser(keycloakUserInfo: any): Promise<User> {
+    const keycloakId = keycloakUserInfo.sub; // Keycloak UUID
     const email = keycloakUserInfo.email;
     const name = keycloakUserInfo.name || keycloakUserInfo.preferred_username;
 
-    // Email ile kullanıcı ara
-    let user = await this.findByEmail(email);
+    // Önce Keycloak ID (user.id) ile kullanıcı ara
+    let user = await this.findById(keycloakId);
 
     if (user) {
-      // Kullanıcı varsa sadece name'i güncelle (email zaten aynı)
-      if (name && name !== user.name) {
-        const updatedUser = await this.updateUser(user.id, { name });
+      // Kullanıcı bulundu, bilgileri kontrol et ve güncelle
+      const needsUpdate = 
+        user.email !== email || 
+        (name && user.name !== name);
+
+      if (needsUpdate) {
+        const updatedUser = await this.updateUser(user.id, { 
+          email, 
+          name 
+        });
         return updatedUser!;
       }
       return user;
     }
 
-    // Yoksa yeni kullanıcı oluştur
+    // Keycloak ID ile bulunamadı, yeni kullanıcı oluştur
+    // Keycloak UUID'sini user.id olarak kullan
     return await this.createUser({
+      id: keycloakId, // Keycloak UUID'sini primary key olarak kullan
       email,
       name,
     });
