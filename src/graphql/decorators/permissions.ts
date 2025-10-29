@@ -1,0 +1,176 @@
+import type { Permission } from "../../auth/types";
+import {
+  requireAuth,
+  requirePermission,
+  requireAnyPermission,
+  requireAllPermissions,
+  requireAdmin,
+  requireUserManagementRead,
+  requireUserManagementWrite,
+  requireAdminPanelReadPermissionForUser,
+  requireAdminPanelWritePermissionForUser,
+  type GraphQLContext,
+} from "../utils/permissions";
+
+// Decorator factory for authentication
+export function Auth() {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    const originalMethod = descriptor.value;
+
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args; // [parent, args, context, info]
+      requireAuth(context as GraphQLContext);
+      return originalMethod.apply(this, args);
+    };
+
+    return descriptor;
+  };
+}
+
+// Decorator factory for single permission
+export function RequirePermission(permission: Permission) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    const originalMethod = descriptor.value;
+
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requirePermission(context as GraphQLContext, permission);
+      return originalMethod.apply(this, args);
+    };
+
+    return descriptor;
+  };
+}
+
+// Decorator factory for multiple permissions (ANY)
+export function RequireAnyPermission(permissions: Permission[]) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    const originalMethod = descriptor.value;
+
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requireAnyPermission(context as GraphQLContext, permissions);
+      return originalMethod.apply(this, args);
+    };
+
+    return descriptor;
+  };
+}
+
+// Decorator factory for multiple permissions (ALL)
+export function RequireAllPermissions(permissions: Permission[]) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    const originalMethod = descriptor.value;
+
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requireAllPermissions(context as GraphQLContext, permissions);
+      return originalMethod.apply(this, args);
+    };
+
+    return descriptor;
+  };
+}
+
+// Decorator for admin access
+export function RequireAdmin() {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    const originalMethod = descriptor.value;
+
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requireAdmin(context as GraphQLContext);
+      return originalMethod.apply(this, args);
+    };
+
+    return descriptor;
+  };
+}
+
+// Decorator for user management read
+export function RequireUserManagementRead() {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    const originalMethod = descriptor.value;
+
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requireUserManagementRead(context as GraphQLContext);
+      return originalMethod.apply(this, args);
+    };
+
+    return descriptor;
+  };
+}
+
+// Decorator for user management write
+export function RequireUserManagementWrite() {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    const originalMethod = descriptor.value;
+
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requireUserManagementWrite(context as GraphQLContext);
+      return originalMethod.apply(this, args);
+    };
+
+    return descriptor;
+  };
+}
+
+// Decorator for admin panel read permission (matching REST API)
+export function RequireAdminPanelReadPermissionForUser() {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requireAdminPanelReadPermissionForUser(context as GraphQLContext);
+      return originalMethod.apply(this, args);
+    };
+    
+    return descriptor;
+  };
+}
+
+// Decorator for admin panel write permission (matching REST API)
+export function RequireAdminPanelWritePermissionForUser() {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requireAdminPanelWritePermissionForUser(context as GraphQLContext);
+      return originalMethod.apply(this, args);
+    };
+    
+    return descriptor;
+  };
+}

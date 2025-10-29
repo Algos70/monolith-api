@@ -4,15 +4,14 @@ import cors from "cors";
 import session from "express-session";
 import RedisStore from "connect-redis";
 import { config } from "dotenv";
+import { ApolloServer } from "@apollo/server";
+import { expressMiddleware } from "@as-integrations/express5";
 import { AppDataSource } from "./data-source";
 import { RedisClient } from "./cache/RedisClient";
-import { 
-  verifyBearer, 
-  verifyBearerWithIntrospection, 
-  requireAuth,
-  requireBearerRoles 
-} from "./auth/middleware";
+import { verifyBearer, requireBearerRoles } from "./auth/middleware";
 import { authRoutes } from "./rest";
+import { adminUserRoutes } from "./rest";
+import { typeDefs, resolvers } from "./graphql";
 
 config();
 
@@ -29,13 +28,11 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
-
 // Session middleware with Redis - will be set up after Redis connection
 let sessionMiddleware: any;
 
 // Health check endpoint
-app.get("/health", (req, res) => {
+app.get("/health", (_, res) => {
   const redis = RedisClient.getInstance();
   res.json({
     status: "OK",
@@ -48,12 +45,15 @@ app.get("/health", (req, res) => {
 // Routes will be added after session middleware is set up
 
 // Legacy JWT route (keeping for backward compatibility)
-app.get("/api/testRole", verifyBearer, requireBearerRoles(["admin"]), (req, res) =>
-  res.json({ ok: true })
+app.get(
+  "/api/testRole",
+  verifyBearer,
+  requireBearerRoles(["admin"]),
+  (req, res) => res.json({ ok: true })
 );
 
 // Basic route
-app.get("/", (req, res) => {
+app.get("/", (_, res) => {
   res.json({ message: "Express Monolith API" });
 });
 
@@ -96,37 +96,44 @@ const startServer = async () => {
     // Apply session middleware
     app.use(sessionMiddleware);
 
+    // Create Apollo Server
+    const server = new ApolloServer({
+      typeDefs,
+      resolvers,
+    });
+
+    // Start Apollo Server
+    await server.start();
+
+    // Apply GraphQL middleware
+    app.use(
+      "/graphql",
+      cors<cors.CorsRequest>({
+        origin: true,
+        credentials: true,
+      }),
+      express.json(),
+      expressMiddleware(server, {
+        context: async ({ req, res }) => {
+          return {
+            req,
+            res,
+            session: req.session,
+            user: req.session?.user || null,
+          };
+        },
+      })
+    );
+
     // Add routes after session middleware
     app.use("/api", authRoutes);
-
-    // Protected API routes (using session-based auth)
-    app.get("/api/protected", requireAuth, (req, res) => {
-      res.json({
-        message: "This is a protected route",
-        user: req.session.user,
-      });
-    });
-
-    // High-security routes using token introspection
-    app.get("/api/admin/users", verifyBearerWithIntrospection, requireBearerRoles(["admin"]), (req, res) => {
-      res.json({
-        message: "Admin route with real-time token validation",
-        users: [] // gerçek user data buraya
-      });
-    });
-
-    // Financial operations - extra security
-    app.post("/api/wallet/transfer", verifyBearerWithIntrospection, (req, res) => {
-      res.json({
-        message: "Wallet transfer validated with Keycloak",
-        user: (req as any).user,
-      });
-    });
+    app.use("/api/admin/users", adminUserRoutes);
 
     // Start the Express server
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`🚀 GraphQL endpoint: http://localhost:${PORT}/graphql`);
     });
   } catch (error) {
     console.error("❌ Error during initialization:", error);
