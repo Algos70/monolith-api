@@ -63,7 +63,7 @@ router.get("/login", (req: Request, res: Response) => {
     authUrl.searchParams.set("client_id", KEYCLOAK_PUBLIC_CLIENT_ID);
     authUrl.searchParams.set(
       "redirect_uri",
-      `${req.protocol}://${req.get("host")}/auth/callback`
+      `${req.protocol}://${req.get("host")}/api/callback`
     );
     authUrl.searchParams.set("response_type", "code");
     authUrl.searchParams.set("scope", "openid profile email");
@@ -104,7 +104,7 @@ router.get("/callback", async (req: Request, res: Response) => {
         grant_type: "authorization_code",
         client_id: KEYCLOAK_PUBLIC_CLIENT_ID,
         code: code as string,
-        redirect_uri: `${req.protocol}://${req.get("host")}/auth/callback`,
+        redirect_uri: `${req.protocol}://${req.get("host")}/api/callback`,
         code_verifier: req.session.codeVerifier,
       }),
       {

@@ -99,7 +99,7 @@ const startServer = async () => {
     app.use(sessionMiddleware);
 
     // Add routes after session middleware
-    app.use("/auth", authRoutes);
+    app.use("/api", authRoutes);
 
     // Protected API routes (using session-based auth)
     app.get("/api/protected", requireAuth, (req, res) => {
