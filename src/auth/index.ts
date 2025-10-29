@@ -14,6 +14,8 @@ export {
   // Permission convenience middlewares
   requireAdminPanelReadPermissionForUser,
   requireAdminPanelWritePermissionForUser,
+  requireAdminPanelReadPermissionForCategory,
+  requireAdminPanelWritePermissionForCategory,
   requireWalletReadPermission,
   requireWalletWritePermission,
   requireCartPermissions,

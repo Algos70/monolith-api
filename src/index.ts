@@ -9,8 +9,7 @@ import { expressMiddleware } from "@as-integrations/express5";
 import { AppDataSource } from "./data-source";
 import { RedisClient } from "./cache/RedisClient";
 import { verifyBearer, requireBearerRoles } from "./auth/middleware";
-import { authRoutes } from "./rest";
-import { adminUserRoutes } from "./rest";
+import { authRoutes, adminUserRoutes, adminCategoryRoutes } from "./rest";
 import { typeDefs, resolvers } from "./graphql";
 
 config();
@@ -128,6 +127,7 @@ const startServer = async () => {
     // Add routes after session middleware
     app.use("/api", authRoutes);
     app.use("/api/admin/users", adminUserRoutes);
+    app.use("/api/admin/categories", adminCategoryRoutes);
 
     // Start the Express server
     app.listen(PORT, () => {
