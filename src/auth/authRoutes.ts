@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import axios from "axios";
 import crypto from "crypto";
+import { refreshTokenWithClient } from "./confidentialClient";
 
 const router = Router();
 
@@ -193,6 +194,33 @@ router.get("/me", (req: Request, res: Response) => {
   const { access_token, refresh_token, id_token, ...userInfo } =
     req.session.user;
   res.json(userInfo);
+});
+
+// Refresh token endpoint
+router.post("/refresh", async (req: Request, res: Response) => {
+  try {
+    if (!req.session.user?.refresh_token) {
+      return res.status(401).json({ error: "No refresh token available" });
+    }
+
+    // Use confidential client to refresh token
+    const tokenData = await refreshTokenWithClient(req.session.user.refresh_token);
+
+    // Update session with new tokens
+    req.session.user = {
+      ...req.session.user,
+      access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token || req.session.user.refresh_token,
+      id_token: tokenData.id_token,
+    };
+
+    res.json({ message: "Token refreshed successfully" });
+  } catch (error) {
+    console.error("Token refresh error:", error);
+    // Clear invalid session
+    req.session.destroy(() => {});
+    res.status(401).json({ error: "Token refresh failed" });
+  }
 });
 
 // Middleware to check if user is authenticated

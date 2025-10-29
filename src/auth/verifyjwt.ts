@@ -1,5 +1,6 @@
 // src/auth/verify-jwt.ts
 import { createRemoteJWKSet, jwtVerify } from "jose";
+import { introspectToken } from "./confidentialClient";
 
 // Move the initialization inside the function to ensure env vars are loaded
 let jwks: any = null;
@@ -36,5 +37,39 @@ export async function verifyBearer(req: any, res: any, next: any) {
     next();
   } catch (e) {
     return res.status(401).json({ error: "Invalid token" });
+  }
+}
+
+// Alternative verification using token introspection (for opaque tokens)
+export async function verifyBearerWithIntrospection(
+  req: any,
+  res: any,
+  next: any
+) {
+  try {
+    const auth = req.headers.authorization || "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+    if (!token) return res.status(401).json({ error: "No token" });
+
+    const introspectionResult = await introspectToken(token);
+
+    if (!introspectionResult.active) {
+      return res.status(401).json({ error: "Token is not active" });
+    }
+
+    // Set user info from introspection result
+    (req as any).user = {
+      sub: introspectionResult.sub,
+      realm_access: { roles: introspectionResult.realm_access?.roles || [] },
+      scope: introspectionResult.scope,
+      client_id: introspectionResult.client_id,
+      username: introspectionResult.username,
+      email: introspectionResult.email,
+    };
+
+    next();
+  } catch (e) {
+    console.error("Token introspection failed:", e);
+    return res.status(401).json({ error: "Token validation failed" });
   }
 }

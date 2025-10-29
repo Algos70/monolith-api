@@ -9,8 +9,8 @@ import { RedisClient } from "./cache/RedisClient";
 import { verifyBearer } from "./auth/verifyjwt";
 import { requireRoles } from "./auth/guards";
 import authRoutes, { requireAuth } from "./auth/authRoutes";
+import { verifyBearerWithIntrospection } from "./auth/verifyjwt";
 
-// Load environment variables
 config();
 
 const app = express();
@@ -106,6 +106,22 @@ const startServer = async () => {
       res.json({
         message: "This is a protected route",
         user: req.session.user,
+      });
+    });
+
+    // High-security routes using token introspection
+    app.get("/api/admin/users", verifyBearerWithIntrospection, requireRoles(["admin"]), (req, res) => {
+      res.json({
+        message: "Admin route with real-time token validation",
+        users: [] // gerçek user data buraya
+      });
+    });
+
+    // Financial operations - extra security
+    app.post("/api/wallet/transfer", verifyBearerWithIntrospection, (req, res) => {
+      res.json({
+        message: "Wallet transfer validated with Keycloak",
+        user: (req as any).user,
       });
     });
 
