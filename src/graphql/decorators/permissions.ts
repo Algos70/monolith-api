@@ -13,6 +13,8 @@ import {
   requireAdminPanelWritePermissionForCategory,
   requireAdminPanelReadPermissionForProducts,
   requireAdminPanelWritePermissionForProducts,
+  requireAdminPanelReadPermissionForWallets,
+  requireAdminPanelWritePermissionForWallets,
   type GraphQLContext,
 } from "../utils/permissions";
 
@@ -232,6 +234,36 @@ export function RequireAdminPanelWritePermissionForProducts() {
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelWritePermissionForProducts(context as GraphQLContext);
+      return originalMethod.apply(this, args);
+    };
+    
+    return descriptor;
+  };
+}
+
+// Decorator for admin panel read permission for wallets (matching REST API)
+export function RequireAdminPanelReadPermissionForWallets() {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requireAdminPanelReadPermissionForWallets(context as GraphQLContext);
+      return originalMethod.apply(this, args);
+    };
+    
+    return descriptor;
+  };
+}
+
+// Decorator for admin panel write permission for wallets (matching REST API)
+export function RequireAdminPanelWritePermissionForWallets() {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requireAdminPanelWritePermissionForWallets(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
     

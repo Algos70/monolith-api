@@ -226,3 +226,16 @@ export const requireAdminPanelWritePermissionForProducts = (
 ) => {
   return requireAnyPermission(context, ["products_write", "admin_write"]);
 };
+
+// Admin panel permission checks for wallets (matching REST API middleware names)
+export const requireAdminPanelReadPermissionForWallets = (
+  context: GraphQLContext
+) => {
+  return requireAnyPermission(context, ["wallet_read", "admin_read"]);
+};
+
+export const requireAdminPanelWritePermissionForWallets = (
+  context: GraphQLContext
+) => {
+  return requireAnyPermission(context, ["wallet_write", "admin_write"]);
+};

@@ -1,6 +1,7 @@
 import { userTypeDefs } from "./types/User";
 import { categoryTypeDefs } from "./types/Category";
 import { productTypeDefs } from "./types/Product";
+import { walletTypeDefs } from "./types/Wallet";
 
 // Base schema with Query and Mutation types
 const baseTypeDefs = `
@@ -18,4 +19,5 @@ export const typeDefs = [
   categoryTypeDefs,
   productTypeDefs,
   userTypeDefs,
+  walletTypeDefs,
 ];
