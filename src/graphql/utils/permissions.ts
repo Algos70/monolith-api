@@ -213,3 +213,16 @@ export const requireCartRead = (context: GraphQLContext) => {
 export const requireCartWrite = (context: GraphQLContext) => {
   return requirePermission(context, "cart_write");
 };
+
+// Admin panel permission checks for products (matching REST API middleware names)
+export const requireAdminPanelReadPermissionForProducts = (
+  context: GraphQLContext
+) => {
+  return requireAnyPermission(context, ["products_read", "admin_read"]);
+};
+
+export const requireAdminPanelWritePermissionForProducts = (
+  context: GraphQLContext
+) => {
+  return requireAnyPermission(context, ["products_write", "admin_write"]);
+};

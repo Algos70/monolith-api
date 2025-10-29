@@ -50,14 +50,7 @@ export const userTypeDefs = `
     product: Product!
   }
 
-  type Product {
-    id: ID!
-    name: String!
-    slug: String!
-    priceMinor: Int!
-    currency: String!
-    stockQty: Int!
-  }
+
 
   input CreateUserInput {
     email: String!
