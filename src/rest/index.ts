@@ -4,3 +4,4 @@ export { default as adminCategoryRoutes } from './adminCategoryRoutes';
 export { default as adminProductRoutes } from './adminProductRoutes';
 export { default as adminWalletRoutes } from './adminWalletRoutes';
 export { default as adminOrderRoutes } from './adminOrderRoutes';
+export { default as adminOrderItemRoutes } from './adminOrderItemRoutes';

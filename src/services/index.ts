@@ -6,3 +6,4 @@ export { CategoryService } from './CategoryService';
 export { ProductService } from './ProductService';
 export { WalletService } from './WalletService';
 export { OrderService } from './OrderService';
+export { OrderItemService } from './OrderItemService';
