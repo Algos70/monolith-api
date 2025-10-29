@@ -9,7 +9,8 @@ export class RedisClient {
       host: process.env.REDIS_HOST || "localhost",
       port: parseInt(process.env.REDIS_PORT || "6379"),
       maxRetriesPerRequest: 3,
-      lazyConnect: true,
+      lazyConnect: false, // Changed to false for immediate connection
+      retryDelayOnFailover: 100,
     };
 
     // Add password if provided

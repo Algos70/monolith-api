@@ -1,11 +1,14 @@
 import "reflect-metadata";
 import express from "express";
 import cors from "cors";
+import session from "express-session";
+import RedisStore from "connect-redis";
 import { config } from "dotenv";
 import { AppDataSource } from "./data-source";
 import { RedisClient } from "./cache/RedisClient";
 import { verifyBearer } from "./auth/verifyjwt";
 import { requireRoles } from "./auth/guards";
+import authRoutes, { requireAuth } from "./auth/authRoutes";
 
 // Load environment variables
 config();
@@ -23,6 +26,16 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Initialize Redis connection first
+const initializeRedis = async () => {
+  const redis = RedisClient.getInstance();
+  await redis.getClient().connect();
+  return redis.getClient();
+};
+
+// Session middleware with Redis - will be set up after Redis connection
+let sessionMiddleware: any;
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   const redis = RedisClient.getInstance();
@@ -34,6 +47,9 @@ app.get("/health", (req, res) => {
   });
 });
 
+// Routes will be added after session middleware is set up
+
+// Legacy JWT route (keeping for backward compatibility)
 app.get("/api/testRole", verifyBearer, requireRoles(["admin"]), (req, res) =>
   res.json({ ok: true })
 );
@@ -52,8 +68,46 @@ const startServer = async () => {
 
     // Initialize Redis connection
     const redis = RedisClient.getInstance();
-    await redis.getClient().ping();
+    const redisClient = redis.getClient();
+
+    // Test Redis connection
+    await redisClient.ping();
     console.log("🔴 Redis connected successfully");
+
+    // Set up session middleware after Redis is connected
+    const RedisStoreClass = RedisStore(session);
+    sessionMiddleware = session({
+      store: new RedisStoreClass({
+        client: redisClient,
+        prefix: "sess:",
+        ttl: 24 * 60 * 60, // 24 hours in seconds
+      }),
+      secret:
+        process.env.SESSION_SECRET || "your-secret-key-change-in-production",
+      resave: false,
+      saveUninitialized: false,
+      name: "connect.sid",
+      cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+      },
+    });
+
+    // Apply session middleware
+    app.use(sessionMiddleware);
+
+    // Add routes after session middleware
+    app.use("/auth", authRoutes);
+
+    // Protected API routes (using session-based auth)
+    app.get("/api/protected", requireAuth, (req, res) => {
+      res.json({
+        message: "This is a protected route",
+        user: req.session.user,
+      });
+    });
 
     // Start the Express server
     app.listen(PORT, () => {
