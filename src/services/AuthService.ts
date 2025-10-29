@@ -1,6 +1,7 @@
 import axios from "axios";
 import crypto from "crypto";
 import { refreshTokenWithClient } from "../auth/confidentialClient";
+import { UserService } from "./UserService";
 
 export interface PKCEParams {
   codeVerifier: string;
@@ -26,9 +27,11 @@ export interface UserInfo {
 
 export class AuthService {
   private config: AuthConfig;
+  private userService: UserService;
 
   constructor(config: AuthConfig) {
     this.config = config;
+    this.userService = new UserService();
   }
 
   // Generate PKCE parameters
@@ -137,7 +140,21 @@ export class AuthService {
     return receivedState === sessionState;
   }
 
-  // Create user session data
+  // Sync user with database and create session
+  async syncUserAndCreateSession(userInfo: UserInfo, tokens: TokenData): Promise<any> {
+    // Kullanıcıyı veritabanında senkronize et
+    const dbUser = await this.userService.syncKeycloakUser(userInfo);
+    
+    return {
+      ...userInfo,
+      dbUserId: dbUser.id, // Veritabanındaki kullanıcı ID'si
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      id_token: tokens.id_token,
+    };
+  }
+
+  // Create user session data (legacy method)
   createUserSession(userInfo: UserInfo, tokens: TokenData): any {
     return {
       ...userInfo,

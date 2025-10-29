@@ -89,8 +89,11 @@ router.get("/callback", async (req: Request, res: Response) => {
     // Get user info
     const userInfo = await authService.getUserInfo(tokens.access_token);
 
-    // Store user and tokens in session
-    const userSession = authService.createUserSession(userInfo, tokens);
+    // Sync user with database and create session
+    const userSession = await authService.syncUserAndCreateSession(
+      userInfo,
+      tokens
+    );
     SessionService.storeUser(req, userSession);
 
     // Clean up temporary session data
