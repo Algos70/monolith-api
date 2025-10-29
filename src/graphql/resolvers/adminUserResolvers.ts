@@ -11,32 +11,7 @@ export class AdminUserResolvers {
   @RequireAdminPanelReadPermissionForUser()
   async adminUsers(_: any, { page = 1, limit = 10, search }: any, context: GraphQLContext) {
     try {
-      // Get all users
-      const users = await userService.getAllUsers();
-      
-      // Filter by search if provided
-      let filteredUsers = users;
-      if (search) {
-        filteredUsers = users.filter(user => 
-          user.email.toLowerCase().includes(search.toLowerCase()) ||
-          user.name?.toLowerCase().includes(search.toLowerCase())
-        );
-      }
-
-      // Simple pagination
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
-
-      return {
-        users: paginatedUsers,
-        pagination: {
-          page,
-          limit,
-          total: filteredUsers.length,
-          totalPages: Math.ceil(filteredUsers.length / limit)
-        }
-      };
+      return await userService.getUsersForAdmin({ page, limit, search });
     } catch (error) {
       console.error('GraphQL adminUsers error:', error);
       throw new Error('Failed to fetch users');
@@ -46,14 +21,12 @@ export class AdminUserResolvers {
   @RequireAdminPanelReadPermissionForUser()
   async adminUser(_: any, { id }: any, context: GraphQLContext) {
     try {
-      const user = await userService.findById(id);
-      if (!user) {
-        throw new UserInputError('User not found');
-      }
-      return user;
+      return await userService.getUserWithRelationsForAdmin(id);
     } catch (error) {
       console.error('GraphQL adminUser error:', error);
-      if (error instanceof UserInputError) throw error;
+      if (error instanceof Error && error.message === 'User not found') {
+        throw new UserInputError(error.message);
+      }
       throw new Error('Failed to fetch user');
     }
   }
@@ -61,24 +34,12 @@ export class AdminUserResolvers {
   @RequireAdminPanelReadPermissionForUser()
   async adminUserWithRelations(_: any, { id, include = [] }: any, context: GraphQLContext) {
     try {
-      let user;
-      if (include.includes('wallets')) {
-        user = await userService.findWithWallets(id);
-      } else if (include.includes('orders')) {
-        user = await userService.findWithOrders(id);
-      } else if (include.includes('carts')) {
-        user = await userService.findWithCarts(id);
-      } else {
-        user = await userService.findById(id);
-      }
-
-      if (!user) {
-        throw new UserInputError('User not found');
-      }
-      return user;
+      return await userService.getUserWithRelationsForAdmin(id, include);
     } catch (error) {
       console.error('GraphQL adminUserWithRelations error:', error);
-      if (error instanceof UserInputError) throw error;
+      if (error instanceof Error && error.message === 'User not found') {
+        throw new UserInputError(error.message);
+      }
       throw new Error('Failed to fetch user with relations');
     }
   }
@@ -87,21 +48,14 @@ export class AdminUserResolvers {
   async adminCreateUser(_: any, { input }: any, context: GraphQLContext) {
     try {
       const { email, name } = input;
-
-      if (!email) {
-        throw new UserInputError('Email is required');
-      }
-
-      // Check if user already exists
-      const existingUser = await userService.findByEmail(email);
-      if (existingUser) {
-        throw new UserInputError('User with this email already exists');
-      }
-
-      return await userService.createUser({ email, name });
+      return await userService.createUserForAdmin({ email, name });
     } catch (error) {
       console.error('GraphQL adminCreateUser error:', error);
-      if (error instanceof UserInputError) throw error;
+      if (error instanceof Error) {
+        if (error.message === 'Email is required' || error.message === 'User with this email already exists') {
+          throw new UserInputError(error.message);
+        }
+      }
       throw new Error('Failed to create user');
     }
   }
@@ -110,31 +64,14 @@ export class AdminUserResolvers {
   async adminUpdateUser(_: any, { id, input }: any, context: GraphQLContext) {
     try {
       const { email, name } = input;
-
-      // Check if user exists
-      const existingUser = await userService.findById(id);
-      if (!existingUser) {
-        throw new UserInputError('User not found');
-      }
-
-      // If email is being changed, check for conflicts
-      if (email && email !== existingUser.email) {
-        const emailConflict = await userService.findByEmail(email);
-        if (emailConflict) {
-          throw new UserInputError('Email already in use by another user');
-        }
-      }
-
-      const updatedUser = await userService.updateUser(id, { email, name });
-      
-      if (!updatedUser) {
-        throw new UserInputError('User not found');
-      }
-
-      return updatedUser;
+      return await userService.updateUserForAdmin(id, { email, name });
     } catch (error) {
       console.error('GraphQL adminUpdateUser error:', error);
-      if (error instanceof UserInputError) throw error;
+      if (error instanceof Error) {
+        if (error.message === 'User not found' || error.message === 'Email already in use by another user') {
+          throw new UserInputError(error.message);
+        }
+      }
       throw new Error('Failed to update user');
     }
   }
@@ -142,17 +79,13 @@ export class AdminUserResolvers {
   @RequireAdminPanelWritePermissionForUser()
   async adminDeleteUser(_: any, { id }: any, context: GraphQLContext) {
     try {
-      // Check if user exists
-      const existingUser = await userService.findById(id);
-      if (!existingUser) {
-        throw new UserInputError('User not found');
-      }
-
-      await userService.deleteUser(id);
+      await userService.deleteUserForAdmin(id);
       return true;
     } catch (error) {
       console.error('GraphQL adminDeleteUser error:', error);
-      if (error instanceof UserInputError) throw error;
+      if (error instanceof Error && error.message === 'User not found') {
+        throw new UserInputError(error.message);
+      }
       throw new Error('Failed to delete user');
     }
   }
