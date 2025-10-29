@@ -31,8 +31,8 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     container_name: keycloak
-    command:
-      - start-dev
+    command: start-dev --import-realm
+
     environment:
       # Admin credentials
       KEYCLOAK_ADMIN: admin
@@ -52,6 +52,10 @@ services:
       - "8080:8080"
     depends_on:
       - keycloak-db
+    # This may need to change when we crate a seperate docker-compose file for the full project
+    volumes:
+      - ./shop-realm.json:/opt/keycloak/data/import/shop-realm.json
+
 
 volumes:
   postgres_data:
