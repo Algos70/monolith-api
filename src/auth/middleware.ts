@@ -283,6 +283,20 @@ export const requireAdminPanelWritePermissionForOrderItems = requireSessionPermi
   "orders_write", "admin_write"
 ]);
 
+export const requireAdminPanelReadPermissionForCarts = requireSessionPermissions([
+  "cart_read", "admin_read"
+]);
+export const requireAdminPanelWritePermissionForCarts = requireSessionPermissions([
+  "cart_write", "admin_write"
+]);
+
+export const requireAdminPanelReadPermissionForCartsItem = requireSessionPermissions([
+  "cart_read", "admin_read"
+]);
+export const requireAdminPanelWritePermissionForCartsItem = requireSessionPermissions([
+  "cart_write", "admin_write"
+]);
+
 export const requireWalletReadPermission = requireSessionPermissions([
   "wallet_read",
 ]);
