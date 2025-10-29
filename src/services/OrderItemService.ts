@@ -57,7 +57,7 @@ export class OrderItemService {
   }
 
   // Yeni order item oluştur
-  async createOrderItem(orderItemData: CreateOrderItemData): Promise<void> {
+  async createOrderItem(orderItemData: CreateOrderItemData): Promise<OrderItem> {
     // Validate order exists
     const order = await this.orderRepository.findById(orderItemData.orderId);
     if (!order) {
@@ -77,6 +77,20 @@ export class OrderItemService {
       orderItemData.unitPriceMinor,
       orderItemData.currency
     );
+
+    // Return the created order item by finding it
+    const orderItems = await this.orderRepository.findOrderItemsByOrderId(orderItemData.orderId);
+    const createdItem = orderItems.find(item => 
+      item.product.id === orderItemData.productId && 
+      item.qty === orderItemData.qty &&
+      item.unitPriceMinor === orderItemData.unitPriceMinor
+    );
+
+    if (!createdItem) {
+      throw new Error("Failed to create order item");
+    }
+
+    return createdItem;
   }
 
   // Order item güncelle

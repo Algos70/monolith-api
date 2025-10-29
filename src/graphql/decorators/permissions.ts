@@ -19,6 +19,8 @@ import {
   requireAdminPanelWritePermissionForOrders,
   requireAdminPanelReadPermissionForOrderItems,
   requireAdminPanelWritePermissionForOrderItems,
+  requireAdminPanelReadPermissionForCarts,
+  requireAdminPanelWritePermissionForCarts,
   type GraphQLContext,
 } from "../utils/permissions";
 
@@ -328,6 +330,36 @@ export function RequireAdminPanelWritePermissionForOrderItems() {
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelWritePermissionForOrderItems(context as GraphQLContext);
+      return originalMethod.apply(this, args);
+    };
+    
+    return descriptor;
+  };
+}
+
+// Decorator for admin panel read permission for carts (matching REST API)
+export function RequireAdminPanelReadPermissionForCarts() {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requireAdminPanelReadPermissionForCarts(context as GraphQLContext);
+      return originalMethod.apply(this, args);
+    };
+    
+    return descriptor;
+  };
+}
+
+// Decorator for admin panel write permission for carts (matching REST API)
+export function RequireAdminPanelWritePermissionForCarts() {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requireAdminPanelWritePermissionForCarts(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
     

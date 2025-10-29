@@ -4,6 +4,7 @@ import { adminProductResolvers } from './adminProductResolvers';
 import { adminWalletResolvers } from './adminWalletResolvers';
 import { adminOrderResolvers } from './adminOrderResolvers';
 import { adminOrderItemResolvers } from './adminOrderItemResolvers';
+import { adminCartResolvers } from './adminCartResolvers';
 
 export const resolvers = {
   Query: {
@@ -12,13 +13,15 @@ export const resolvers = {
     ...adminProductResolvers.Query,
     ...adminWalletResolvers.Query,
     ...adminOrderResolvers.Query,
-    ...adminOrderItemResolvers.Query
+    ...adminOrderItemResolvers.Query,
+    ...adminCartResolvers.Query
   },
   Mutation: {
     ...adminCategoryResolvers.Mutation,
     ...adminProductResolvers.Mutation,
     ...adminWalletResolvers.Mutation,
     ...adminOrderResolvers.Mutation,
-    ...adminOrderItemResolvers.Mutation
+    ...adminOrderItemResolvers.Mutation,
+    ...adminCartResolvers.Mutation
   }
 };
