@@ -2,7 +2,6 @@ import { Router, Request, Response } from "express";
 import { UserService } from "../services/UserService";
 import {
   requireAdminPanelReadPermissionForUser,
-  requireAdminPanelWritePermissionForUser,
 } from "../auth";
 
 const router = Router();
@@ -46,29 +45,6 @@ router.get(
   }
 );
 
-// POST /admin/users - Create new user
-router.post(
-  "/",
-  requireAdminPanelWritePermissionForUser,
-  async (req: Request, res: Response) => {
-    try {
-      const { email, name } = req.body;
-      const user = await userService.createUserForAdmin({ email, name });
-      res.status(201).json(user);
-    } catch (error) {
-      console.error("Create user error:", error);
-      if (error instanceof Error) {
-        if (error.message === "Email is required") {
-          return res.status(400).json({ error: error.message });
-        }
-        if (error.message === "User with this email already exists") {
-          return res.status(409).json({ error: error.message });
-        }
-      }
-      res.status(500).json({ error: "Failed to create user" });
-    }
-  }
-);
 
 
 // GET /admin/users/:id/with-relations - Get user with all relations

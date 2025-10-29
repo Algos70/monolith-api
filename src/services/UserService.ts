@@ -134,64 +134,6 @@ export class UserService {
     };
   }
 
-  // Admin panel için kullanıcı oluşturma (validasyon ile)
-  async createUserForAdmin(userData: CreateUserData): Promise<User> {
-    const { email, name } = userData;
-
-    // Email zorunlu kontrolü
-    if (!email) {
-      throw new Error("Email is required");
-    }
-
-    // Kullanıcı zaten var mı kontrolü
-    const existingUser = await this.findByEmail(email);
-    if (existingUser) {
-      throw new Error("User with this email already exists");
-    }
-
-    return await this.createUser({ email, name });
-  }
-
-  // Admin panel için kullanıcı güncelleme (validasyon ile)
-  async updateUserForAdmin(
-    id: string,
-    userData: Partial<CreateUserData>
-  ): Promise<User> {
-    const { email, name } = userData;
-
-    // Kullanıcı var mı kontrolü
-    const existingUser = await this.findById(id);
-    if (!existingUser) {
-      throw new Error("User not found");
-    }
-
-    // Email değişiyorsa çakışma kontrolü
-    if (email && email !== existingUser.email) {
-      const emailConflict = await this.findByEmail(email);
-      if (emailConflict) {
-        throw new Error("Email already in use by another user");
-      }
-    }
-
-    const updatedUser = await this.updateUser(id, { email, name });
-    if (!updatedUser) {
-      throw new Error("User not found");
-    }
-
-    return updatedUser;
-  }
-
-  // Admin panel için kullanıcı silme (validasyon ile)
-  async deleteUserForAdmin(id: string): Promise<void> {
-    // Kullanıcı var mı kontrolü
-    const existingUser = await this.findById(id);
-    if (!existingUser) {
-      throw new Error("User not found");
-    }
-
-    await this.deleteUser(id);
-  }
-
   // Admin panel için ilişkilerle birlikte kullanıcı getirme
   async getUserWithRelationsForAdmin(
     id: string,
@@ -200,8 +142,12 @@ export class UserService {
     let user: User | null;
 
     // Handle both string and array formats for include
-    const includeArray = Array.isArray(include) ? include : include ? [include] : [];
-    const includeStr = includeArray.join(',');
+    const includeArray = Array.isArray(include)
+      ? include
+      : include
+      ? [include]
+      : [];
+    const includeStr = includeArray.join(",");
 
     if (includeStr.includes("wallets")) {
       user = await this.findWithWallets(id);
