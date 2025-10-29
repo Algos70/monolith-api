@@ -9,6 +9,8 @@ import {
   requireUserManagementWrite,
   requireAdminPanelReadPermissionForUser,
   requireAdminPanelWritePermissionForUser,
+  requireAdminPanelReadPermissionForCategory,
+  requireAdminPanelWritePermissionForCategory,
   type GraphQLContext,
 } from "../utils/permissions";
 
@@ -168,6 +170,36 @@ export function RequireAdminPanelWritePermissionForUser() {
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelWritePermissionForUser(context as GraphQLContext);
+      return originalMethod.apply(this, args);
+    };
+    
+    return descriptor;
+  };
+}
+
+// Decorator for admin panel read permission for categories (matching REST API)
+export function RequireAdminPanelReadPermissionForCategory() {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requireAdminPanelReadPermissionForCategory(context as GraphQLContext);
+      return originalMethod.apply(this, args);
+    };
+    
+    return descriptor;
+  };
+}
+
+// Decorator for admin panel write permission for categories (matching REST API)
+export function RequireAdminPanelWritePermissionForCategory() {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requireAdminPanelWritePermissionForCategory(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
     

@@ -144,6 +144,19 @@ export const requireAdminPanelWritePermissionForUser = (
   return requireAnyPermission(context, ["admin_write", "user_write"]);
 };
 
+// Admin panel permission checks for categories (matching REST API middleware names)
+export const requireAdminPanelReadPermissionForCategory = (
+  context: GraphQLContext
+) => {
+  return requireAnyPermission(context, ["categories_read", "admin_read"]);
+};
+
+export const requireAdminPanelWritePermissionForCategory = (
+  context: GraphQLContext
+) => {
+  return requireAnyPermission(context, ["categories_write", "admin_write"]);
+};
+
 // Specific permission helpers
 export const requireAdminRead = (context: GraphQLContext) => {
   return requirePermission(context, "admin_read");

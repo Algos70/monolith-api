@@ -1,10 +1,12 @@
 import { adminUserResolvers } from './adminUserResolvers';
+import { adminCategoryResolvers } from './adminCategoryResolvers';
 
 export const resolvers = {
   Query: {
-    ...adminUserResolvers.Query
+    ...adminUserResolvers.Query,
+    ...adminCategoryResolvers.Query
   },
   Mutation: {
-    ...adminUserResolvers.Mutation
+    ...adminCategoryResolvers.Mutation
   }
 };
