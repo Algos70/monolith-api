@@ -116,4 +116,75 @@ export class OrderRepository {
       order: { createdAt: "DESC" }
     });
   }
+
+  // OrderItem specific methods for admin/service layer
+  async findOrderItemById(id: string): Promise<OrderItem | null> {
+    return await this.orderItemRepository.findOne({
+      where: { id },
+      relations: ["order", "product"]
+    });
+  }
+
+  async findOrderItemsByOrderId(orderId: string): Promise<OrderItem[]> {
+    return await this.orderItemRepository.find({
+      where: { order: { id: orderId } },
+      relations: ["order", "product"]
+    });
+  }
+
+  async findOrderItemsByProductId(productId: string): Promise<OrderItem[]> {
+    return await this.orderItemRepository.find({
+      where: { product: { id: productId } },
+      relations: ["order", "product"]
+    });
+  }
+
+  async findAllOrderItems(): Promise<OrderItem[]> {
+    return await this.orderItemRepository.find({
+      relations: ["order", "product"]
+    });
+  }
+
+  async updateOrderItem(id: string, updateData: Partial<OrderItem>): Promise<void> {
+    await this.orderItemRepository.update(id, updateData);
+  }
+
+  async deleteOrderItem(id: string): Promise<void> {
+    await this.orderItemRepository.delete(id);
+  }
+
+  async findOrderItemsWithPagination(options: {
+    page: number;
+    limit: number;
+    orderId?: string;
+    productId?: string;
+  }) {
+    const { page, limit, orderId, productId } = options;
+
+    const queryBuilder = this.orderItemRepository
+      .createQueryBuilder("orderItem")
+      .leftJoinAndSelect("orderItem.order", "order")
+      .leftJoinAndSelect("orderItem.product", "product");
+
+    if (orderId) {
+      queryBuilder.where("order.id = :orderId", { orderId });
+    }
+
+    if (productId) {
+      queryBuilder.andWhere("product.id = :productId", { productId });
+    }
+
+    const total = await queryBuilder.getCount();
+    const offset = (page - 1) * limit;
+
+    const orderItems = await queryBuilder
+      .skip(offset)
+      .take(limit)
+      .getMany();
+
+    return {
+      orderItems,
+      total,
+    };
+  }
 }

@@ -1,6 +1,6 @@
 import { OrderItem } from "../entities/OrderItem";
-import { AppDataSource } from "../data-source";
-import { Repository } from "typeorm";
+import { OrderRepository } from "../repositories/OrderRepository";
+import { ProductRepository } from "../repositories/ProductRepository";
 
 export interface CreateOrderItemData {
   orderId: string;
@@ -28,54 +28,55 @@ export interface OrderItemListResult {
 }
 
 export class OrderItemService {
-  private orderItemRepository: Repository<OrderItem>;
+  private orderRepository: OrderRepository;
+  private productRepository: ProductRepository;
 
   constructor() {
-    this.orderItemRepository = AppDataSource.getRepository(OrderItem);
+    this.orderRepository = new OrderRepository();
+    this.productRepository = new ProductRepository();
   }
 
   // ID ile order item bul
   async findById(id: string): Promise<OrderItem | null> {
-    return await this.orderItemRepository.findOne({
-      where: { id },
-      relations: ["order", "product"],
-    });
+    return await this.orderRepository.findOrderItemById(id);
   }
 
   // Sipariş ID'sine göre order item'ları getir
   async findByOrderId(orderId: string): Promise<OrderItem[]> {
-    return await this.orderItemRepository.find({
-      where: { order: { id: orderId } },
-      relations: ["order", "product"],
-    });
+    return await this.orderRepository.findOrderItemsByOrderId(orderId);
   }
 
   // Ürün ID'sine göre order item'ları getir
   async findByProductId(productId: string): Promise<OrderItem[]> {
-    return await this.orderItemRepository.find({
-      where: { product: { id: productId } },
-      relations: ["order", "product"],
-    });
+    return await this.orderRepository.findOrderItemsByProductId(productId);
   }
 
   // Tüm order item'ları getir
   async findAll(): Promise<OrderItem[]> {
-    return await this.orderItemRepository.find({
-      relations: ["order", "product"],
-    });
+    return await this.orderRepository.findAllOrderItems();
   }
 
   // Yeni order item oluştur
-  async createOrderItem(orderItemData: CreateOrderItemData): Promise<OrderItem> {
-    const { orderId, productId, ...itemData } = orderItemData;
+  async createOrderItem(orderItemData: CreateOrderItemData): Promise<void> {
+    // Validate order exists
+    const order = await this.orderRepository.findById(orderItemData.orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
 
-    const orderItem = this.orderItemRepository.create({
-      ...itemData,
-      order: { id: orderId },
-      product: { id: productId },
-    });
+    // Validate product exists
+    const product = await this.productRepository.findById(orderItemData.productId);
+    if (!product) {
+      throw new Error("Product not found");
+    }
 
-    return await this.orderItemRepository.save(orderItem);
+    await this.orderRepository.addOrderItem(
+      orderItemData.orderId,
+      orderItemData.productId,
+      orderItemData.qty,
+      orderItemData.unitPriceMinor,
+      orderItemData.currency
+    );
   }
 
   // Order item güncelle
@@ -83,57 +84,46 @@ export class OrderItemService {
     id: string,
     updateData: Partial<OrderItem>
   ): Promise<OrderItem | null> {
-    const orderItem = await this.findById(id);
+    const orderItem = await this.orderRepository.findOrderItemById(id);
     if (!orderItem) {
       throw new Error("Order item not found");
     }
 
-    await this.orderItemRepository.update(id, updateData);
-    return await this.findById(id);
+    await this.orderRepository.updateOrderItem(id, updateData);
+    return await this.orderRepository.findOrderItemById(id);
   }
 
   // Order item sil
   async deleteOrderItem(id: string): Promise<void> {
-    const orderItem = await this.findById(id);
+    const orderItem = await this.orderRepository.findOrderItemById(id);
     if (!orderItem) {
       throw new Error("Order item not found");
     }
 
-    await this.orderItemRepository.delete(id);
+    await this.orderRepository.deleteOrderItem(id);
   }
 
   // Admin için order item'ları listele (pagination ile)
-  async getOrderItemsForAdmin(options: OrderItemListOptions): Promise<OrderItemListResult> {
+  async getOrderItemsForAdmin(
+    options: OrderItemListOptions
+  ): Promise<OrderItemListResult> {
     const { page = 1, limit = 10, orderId, productId } = options;
 
-    const queryBuilder = this.orderItemRepository
-      .createQueryBuilder("orderItem")
-      .leftJoinAndSelect("orderItem.order", "order")
-      .leftJoinAndSelect("orderItem.product", "product");
+    const result = await this.orderRepository.findOrderItemsWithPagination({
+      page,
+      limit,
+      orderId,
+      productId,
+    });
 
-    if (orderId) {
-      queryBuilder.where("order.id = :orderId", { orderId });
-    }
-
-    if (productId) {
-      queryBuilder.andWhere("product.id = :productId", { productId });
-    }
-
-    const total = await queryBuilder.getCount();
-    const totalPages = Math.ceil(total / limit);
-    const offset = (page - 1) * limit;
-
-    const orderItems = await queryBuilder
-      .skip(offset)
-      .take(limit)
-      .getMany();
+    const totalPages = Math.ceil(result.total / limit);
 
     return {
-      orderItems,
+      orderItems: result.orderItems,
       pagination: {
         page,
         limit,
-        total,
+        total: result.total,
         totalPages,
       },
     };
@@ -141,7 +131,7 @@ export class OrderItemService {
 
   // Admin için order item detayı
   async getOrderItemForAdmin(id: string): Promise<OrderItem> {
-    const orderItem = await this.findById(id);
+    const orderItem = await this.orderRepository.findOrderItemById(id);
     if (!orderItem) {
       throw new Error("Order item not found");
     }
