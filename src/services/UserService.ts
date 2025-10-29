@@ -24,8 +24,11 @@ export class UserService {
   }
 
   // Kullanıcı bilgilerini güncelle
-  async updateUser(id: string, userData: Partial<CreateUserData>): Promise<User | null> {
-    return await this.userRepository.update(id, userData);
+  async updateUser(
+    id: string,
+    userData: Partial<CreateUserData>
+  ): Promise<User | null> {
+    return await this.userRepository.updateProfile(id, userData);
   }
 
   // Keycloak kullanıcısını senkronize et (yoksa oluştur, varsa güncelle)
@@ -48,7 +51,7 @@ export class UserService {
     // Yoksa yeni kullanıcı oluştur
     return await this.createUser({
       email,
-      name
+      name,
     });
   }
 }
