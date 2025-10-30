@@ -2,7 +2,7 @@
 export const orderTypeDefs = `
   type Order {
     id: ID!
-    totalMinor: Int!
+    totalMinor: String!
     currency: String!
     status: String!
     createdAt: String!
@@ -16,7 +16,7 @@ export const orderTypeDefs = `
   input CreateOrderItemForOrderInput {
     productId: ID!
     qty: Int!
-    unitPriceMinor: Int!
+    unitPriceMinor: String!
     currency: String!
   }
 

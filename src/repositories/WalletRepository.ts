@@ -41,7 +41,10 @@ export class WalletRepository {
       currency,
       balanceMinor: initialBalance
     });
-    return await this.repository.save(wallet);
+    const savedWallet = await this.repository.save(wallet);
+    
+    // Return the wallet with full user relation loaded
+    return await this.findById(savedWallet.id) as Wallet;
   }
 
   // Balance operations (domain-specific methods)

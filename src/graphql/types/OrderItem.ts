@@ -3,7 +3,7 @@ export const orderItemTypeDefs = `
   type OrderItem {
     id: ID!
     qty: Int!
-    unitPriceMinor: Int!
+    unitPriceMinor: String!
     currency: String!
     createdAt: String!
     updatedAt: String!
@@ -15,13 +15,13 @@ export const orderItemTypeDefs = `
     orderId: ID!
     productId: ID!
     qty: Int!
-    unitPriceMinor: Int!
+    unitPriceMinor: String!
     currency: String!
   }
 
   input UpdateOrderItemInput {
     qty: Int
-    unitPriceMinor: Int
+    unitPriceMinor: String
     currency: String
   }
 
@@ -30,7 +30,7 @@ export const orderItemTypeDefs = `
   }
 
   input UpdateOrderItemPriceInput {
-    unitPriceMinor: Int!
+    unitPriceMinor: String!
   }
 
   type OrderItemConnection {

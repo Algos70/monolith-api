@@ -64,10 +64,15 @@ export class WalletResolvers {
         throw new UserInputError("Currency is required");
       }
 
+      const initialBalanceNum = initialBalance ? parseInt(initialBalance, 10) : 0;
+      if (isNaN(initialBalanceNum) || initialBalanceNum < 0) {
+        throw new UserInputError("Initial balance must be a non-negative number");
+      }
+
       return await userWalletService.createUserWallet({
         userId,
         currency,
-        initialBalance,
+        initialBalance: initialBalanceNum,
       });
     } catch (error) {
       console.error("GraphQL createUserWallet error:", error);
@@ -104,16 +109,19 @@ export class WalletResolvers {
 
       const { amountMinor } = input;
 
-      if (!amountMinor || typeof amountMinor !== "number") {
-        throw new UserInputError(
-          "Amount (in minor units) is required and must be a number"
-        );
+      if (!amountMinor) {
+        throw new UserInputError("Amount (in minor units) is required");
+      }
+
+      const amountMinorNum = parseInt(amountMinor, 10);
+      if (isNaN(amountMinorNum) || amountMinorNum <= 0) {
+        throw new UserInputError("Amount must be a positive number");
       }
 
       return await userWalletService.increaseUserWalletBalance({
         userId,
         walletId,
-        amountMinor,
+        amountMinor: amountMinorNum,
       });
     } catch (error) {
       console.error("GraphQL increaseUserWalletBalance error:", error);
@@ -190,15 +198,16 @@ export class WalletResolvers {
         );
       }
 
-      if (typeof amountMinor !== "number") {
-        throw new UserInputError("Amount must be a number");
+      const amountMinorNum = parseInt(amountMinor, 10);
+      if (isNaN(amountMinorNum) || amountMinorNum <= 0) {
+        throw new UserInputError("Amount must be a positive number");
       }
 
       await userWalletService.transferFromUserWallet({
         userId,
         toWalletId,
         currency,
-        amountMinor,
+        amountMinor: amountMinorNum,
       });
 
       return {

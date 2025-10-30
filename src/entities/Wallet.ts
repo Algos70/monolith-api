@@ -10,6 +10,9 @@ export class Wallet extends BaseEntity {
   @Column({ length: 3 })
   currency!: string; // ISO 4217
 
-  @Column({ type: "bigint", default: 0 })
+  @Column({ type: "bigint", default: 0, transformer: {
+    to: (value: number) => value,
+    from: (value: string) => parseInt(value, 10)
+  }})
   balanceMinor!: number; // store as minor units (cents)
 }

@@ -11,44 +11,9 @@ export const userTypeDefs = `
     carts: [Cart!]
   }
 
-  type Wallet {
-    id: ID!
-    currency: String!
-    balanceMinor: Int!
-    createdAt: String!
-    updatedAt: String!
-  }
 
-  type Order {
-    id: ID!
-    totalMinor: Int!
-    currency: String!
-    status: String!
-    createdAt: String!
-    updatedAt: String!
-    items: [OrderItem!]
-  }
 
-  type OrderItem {
-    id: ID!
-    qty: Int!
-    unitPriceMinor: Int!
-    currency: String!
-    product: Product!
-  }
 
-  type Cart {
-    id: ID!
-    createdAt: String!
-    updatedAt: String!
-    items: [CartItem!]
-  }
-
-  type CartItem {
-    id: ID!
-    qty: Int!
-    product: Product!
-  }
 
 
 

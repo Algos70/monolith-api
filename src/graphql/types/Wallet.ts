@@ -3,7 +3,7 @@ export const walletTypeDefs = `
   type Wallet {
     id: ID!
     currency: String!
-    balanceMinor: Int!
+    balanceMinor: String!
     user: User!
     createdAt: String!
     updatedAt: String!
@@ -12,29 +12,29 @@ export const walletTypeDefs = `
   input CreateWalletInput {
     userId: ID!
     currency: String!
-    initialBalance: Int = 0
+    initialBalance: String = "0"
   }
 
   input BalanceOperationInput {
-    amountMinor: Int!
+    amountMinor: String!
   }
 
   input TransferInput {
     fromUserId: ID!
     toUserId: ID!
     currency: String!
-    amountMinor: Int!
+    amountMinor: String!
   }
 
   input CreateUserWalletInput {
     currency: String!
-    initialBalance: Int = 0
+    initialBalance: String = "0"
   }
 
   input UserTransferInput {
     toWalletId: ID!
     currency: String!
-    amountMinor: Int!
+    amountMinor: String!
   }
 
   type WalletConnection {
@@ -43,7 +43,7 @@ export const walletTypeDefs = `
   }
 
   type BalanceResponse {
-    balance: Int!
+    balance: String!
     currency: String!
     userId: ID!
   }
