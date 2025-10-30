@@ -103,4 +103,54 @@ export class CartService {
       emptyCarts,
     };
   }
+
+  // User-facing cart methods
+  async getUserCart(userId: string) {
+    let cart = await this.cartRepository.getCartByUser(userId);
+    
+    if (!cart) {
+      cart = await this.cartRepository.createCart(userId);
+    }
+    
+    return cart;
+  }
+
+  async addItemToCart(userId: string, productId: string, quantity: number) {
+    let cart = await this.cartRepository.getCartByUser(userId);
+    
+    if (!cart) {
+      cart = await this.cartRepository.createCart(userId);
+    }
+
+    await this.cartRepository.addItem(cart.id, productId, quantity);
+    
+    // Return updated cart
+    return await this.cartRepository.getCartByUser(userId);
+  }
+
+  async removeItemFromCart(userId: string, productId: string) {
+    const cart = await this.cartRepository.getCartByUser(userId);
+    
+    if (!cart) {
+      throw new Error("Cart not found");
+    }
+
+    await this.cartRepository.removeItem(cart.id, productId);
+    
+    // Return updated cart
+    return await this.cartRepository.getCartByUser(userId);
+  }
+
+  async clearUserCart(userId: string) {
+    const cart = await this.cartRepository.getCartByUser(userId);
+    
+    if (!cart) {
+      throw new Error("Cart not found");
+    }
+
+    await this.cartRepository.clearCart(cart.id);
+    
+    // Return updated cart
+    return await this.cartRepository.getCartByUser(userId);
+  }
 }

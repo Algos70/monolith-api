@@ -303,8 +303,10 @@ export const requireWalletReadPermission = requireSessionPermissions([
 export const requireWalletWritePermission = requireSessionPermissions([
   "wallet_write",
 ]);
-export const requireCartPermissions = requireSessionPermissions([
+export const requireCartReadPermissions = requireSessionPermissions([
   "cart_read",
+]);
+export const requireCartWritePermissions = requireSessionPermissions([
   "cart_write",
 ]);
 export const requireProductsReadPermission = requireSessionPermissions([
