@@ -92,11 +92,12 @@ export class AdminWalletResolvers {
   @RequireAdminPanelWritePermissionForWallets()
   async adminCreateWallet(_: any, { input }: any, context: GraphQLContext) {
     try {
-      const { userId, currency, initialBalance } = input;
+      const { userId, currency, initialBalanceMinor } = input;
+      const initialBalanceNum = initialBalanceMinor ? parseInt(initialBalanceMinor, 10) : 0;
       return await walletService.createWallet({
         userId,
         currency,
-        initialBalance,
+        initialBalance: initialBalanceNum,
       });
     } catch (error) {
       console.error('GraphQL adminCreateWallet error:', error);

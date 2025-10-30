@@ -12,7 +12,7 @@ export const walletTypeDefs = `
   input CreateWalletInput {
     userId: ID!
     currency: String!
-    initialBalance: String = "0"
+    initialBalanceMinor: String = "0"
   }
 
   input BalanceOperationInput {
@@ -28,7 +28,7 @@ export const walletTypeDefs = `
 
   input CreateUserWalletInput {
     currency: String!
-    initialBalance: String = "0"
+    initialBalanceMinor: String = "0"
   }
 
   input UserTransferInput {

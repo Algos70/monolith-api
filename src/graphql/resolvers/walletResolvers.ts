@@ -58,13 +58,13 @@ export class WalletResolvers {
         throw new UserInputError("User ID not found in session");
       }
 
-      const { currency, initialBalance } = input;
+      const { currency, initialBalanceMinor } = input;
 
       if (!currency) {
         throw new UserInputError("Currency is required");
       }
 
-      const initialBalanceNum = initialBalance ? parseInt(initialBalance, 10) : 0;
+      const initialBalanceNum = initialBalanceMinor ? parseInt(initialBalanceMinor, 10) : 0;
       if (isNaN(initialBalanceNum) || initialBalanceNum < 0) {
         throw new UserInputError("Initial balance must be a non-negative number");
       }
