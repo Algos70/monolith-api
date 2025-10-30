@@ -42,6 +42,16 @@ const cartTypes = `
     quantity: Int!
   }
 
+  input UpdateItemQuantityInput {
+    productId: ID!
+    quantity: Int!
+  }
+
+  input DecreaseItemQuantityInput {
+    productId: ID!
+    decreaseBy: Int = 1
+  }
+
   input UpdateCartItemInput {
     qty: Int!
   }
@@ -65,6 +75,8 @@ const cartMutations = `
   extend type Mutation {
     # User Cart Mutations
     addItemToCart(input: AddItemToCartInput!): Cart!
+    updateItemQuantity(input: UpdateItemQuantityInput!): Cart!
+    decreaseItemQuantity(input: DecreaseItemQuantityInput!): Cart!
     removeItemFromCart(productId: ID!): Cart!
     clearCart: Cart!
 

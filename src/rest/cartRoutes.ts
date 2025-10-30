@@ -1,6 +1,9 @@
 import { Router, Request, Response } from "express";
 import { CartService } from "../services/CartService";
-import { requireCartReadPermissions, requireCartWritePermissions } from "../auth";
+import {
+  requireCartReadPermissions,
+  requireCartWritePermissions,
+} from "../auth";
 import { SessionService } from "../services/SessionService";
 
 const router = Router();
@@ -35,8 +38,8 @@ router.post(
       const { productId, quantity } = req.body;
 
       if (!productId || !quantity || quantity <= 0) {
-        return res.status(400).json({ 
-          error: "Product ID and valid quantity are required" 
+        return res.status(400).json({
+          error: "Product ID and valid quantity are required",
         });
       }
 
@@ -74,6 +77,72 @@ router.delete(
   }
 );
 
+// PUT /cart/items/:productId - Update item quantity in current user's cart
+router.put(
+  "/items/:productId",
+  requireCartWritePermissions,
+  async (req: Request, res: Response) => {
+    try {
+      const user = SessionService.getUser(req);
+      const userId = user.sub;
+      const { productId } = req.params;
+      const { quantity } = req.body;
+
+      if (!quantity || quantity < 0) {
+        return res.status(400).json({
+          error: "Valid quantity is required",
+        });
+      }
+
+      const cart = await cartService.updateItemQuantity(
+        userId,
+        productId,
+        quantity
+      );
+      res.json(cart);
+    } catch (error) {
+      console.error("Update item quantity error:", error);
+      if (error instanceof Error && error.message === "Cart not found") {
+        return res.status(404).json({ error: error.message });
+      }
+      res.status(500).json({ error: "Failed to update item quantity" });
+    }
+  }
+);
+
+// PATCH /cart/items/:productId/decrease - Decrease item quantity in current user's cart
+router.patch(
+  "/items/:productId/decrease",
+  requireCartWritePermissions,
+  async (req: Request, res: Response) => {
+    try {
+      const user = SessionService.getUser(req);
+      const userId = user.sub;
+      const { productId } = req.params;
+      const { decreaseBy } = req.body;
+
+      const decreaseAmount = decreaseBy && decreaseBy > 0 ? decreaseBy : 1;
+
+      const cart = await cartService.decreaseItemQuantity(
+        userId,
+        productId,
+        decreaseAmount
+      );
+      res.json(cart);
+    } catch (error) {
+      console.error("Decrease item quantity error:", error);
+      if (
+        error instanceof Error &&
+        (error.message === "Cart not found" ||
+          error.message === "Item not found in cart")
+      ) {
+        return res.status(404).json({ error: error.message });
+      }
+      res.status(500).json({ error: "Failed to decrease item quantity" });
+    }
+  }
+);
+
 // DELETE /cart - Clear current user's cart
 router.delete(
   "/",
@@ -84,9 +153,9 @@ router.delete(
       const userId = user.sub;
 
       const cart = await cartService.clearUserCart(userId);
-      res.json({ 
+      res.json({
         message: "Cart cleared successfully",
-        cart 
+        cart,
       });
     } catch (error) {
       console.error("Clear cart error:", error);

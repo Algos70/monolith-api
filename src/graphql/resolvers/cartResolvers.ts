@@ -62,6 +62,60 @@ export class CartResolvers {
   }
 
   @RequirePermission("cart_write")
+  async updateItemQuantity(
+    _: any,
+    { input }: { input: { productId: string; quantity: number } },
+    context: GraphQLContext
+  ) {
+    try {
+      const user = requireCartWrite(context);
+      const { productId, quantity } = input;
+
+      if (quantity < 0) {
+        throw new UserInputError("Quantity cannot be negative");
+      }
+
+      return await cartService.updateItemQuantity(user.sub, productId, quantity);
+    } catch (error) {
+      console.error("GraphQL updateItemQuantity error:", error);
+      if (error instanceof UserInputError) {
+        throw error;
+      }
+      if (error instanceof Error && error.message === "Cart not found") {
+        throw new UserInputError(error.message);
+      }
+      throw new Error("Failed to update item quantity");
+    }
+  }
+
+  @RequirePermission("cart_write")
+  async decreaseItemQuantity(
+    _: any,
+    { input }: { input: { productId: string; decreaseBy?: number } },
+    context: GraphQLContext
+  ) {
+    try {
+      const user = requireCartWrite(context);
+      const { productId, decreaseBy = 1 } = input;
+
+      if (decreaseBy <= 0) {
+        throw new UserInputError("Decrease amount must be positive");
+      }
+
+      return await cartService.decreaseItemQuantity(user.sub, productId, decreaseBy);
+    } catch (error) {
+      console.error("GraphQL decreaseItemQuantity error:", error);
+      if (error instanceof UserInputError) {
+        throw error;
+      }
+      if (error instanceof Error && (error.message === "Cart not found" || error.message === "Item not found in cart")) {
+        throw new UserInputError(error.message);
+      }
+      throw new Error("Failed to decrease item quantity");
+    }
+  }
+
+  @RequirePermission("cart_write")
   async clearCart(_: any, __: any, context: GraphQLContext) {
     try {
       const user = requireCartWrite(context);
@@ -85,6 +139,8 @@ export const cartResolvers = {
   },
   Mutation: {
     addItemToCart: cartResolversInstance.addItemToCart.bind(cartResolversInstance),
+    updateItemQuantity: cartResolversInstance.updateItemQuantity.bind(cartResolversInstance),
+    decreaseItemQuantity: cartResolversInstance.decreaseItemQuantity.bind(cartResolversInstance),
     removeItemFromCart: cartResolversInstance.removeItemFromCart.bind(cartResolversInstance),
     clearCart: cartResolversInstance.clearCart.bind(cartResolversInstance),
   },

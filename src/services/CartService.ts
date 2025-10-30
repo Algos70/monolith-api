@@ -153,4 +153,51 @@ export class CartService {
     // Return updated cart
     return await this.cartRepository.getCartByUser(userId);
   }
+
+  async updateItemQuantity(userId: string, productId: string, quantity: number) {
+    const cart = await this.cartRepository.getCartByUser(userId);
+    
+    if (!cart) {
+      throw new Error("Cart not found");
+    }
+
+    if (quantity <= 0) {
+      // If quantity is 0 or negative, remove the item
+      await this.cartRepository.removeItem(cart.id, productId);
+    } else {
+      // Update the quantity
+      await this.cartRepository.updateItemQuantity(cart.id, productId, quantity);
+    }
+    
+    // Return updated cart
+    return await this.cartRepository.getCartByUser(userId);
+  }
+
+  async decreaseItemQuantity(userId: string, productId: string, decreaseBy: number = 1) {
+    const cart = await this.cartRepository.getCartByUser(userId);
+    
+    if (!cart) {
+      throw new Error("Cart not found");
+    }
+
+    // Find the current item
+    const currentItem = cart.items?.find(item => item.product.id === productId);
+    
+    if (!currentItem) {
+      throw new Error("Item not found in cart");
+    }
+
+    const newQuantity = currentItem.qty - decreaseBy;
+    
+    if (newQuantity <= 0) {
+      // Remove the item if quantity becomes 0 or negative
+      await this.cartRepository.removeItem(cart.id, productId);
+    } else {
+      // Update with new quantity
+      await this.cartRepository.updateItemQuantity(cart.id, productId, newQuantity);
+    }
+    
+    // Return updated cart
+    return await this.cartRepository.getCartByUser(userId);
+  }
 }
