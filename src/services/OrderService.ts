@@ -1,5 +1,9 @@
 import { Order } from "../entities/Order";
 import { OrderRepository } from "../repositories/OrderRepository";
+import { CartService } from "./CartService";
+import { WalletService } from "./WalletService";
+import { ProductService } from "./ProductService";
+import { AppDataSource } from "../data-source";
 
 export interface CreateOrderData {
   userId: string;
@@ -32,11 +36,22 @@ export interface OrderListResult {
   };
 }
 
+export interface CreateOrderFromCartData {
+  userId: string;
+  walletId: string;
+}
+
 export class OrderService {
   private orderRepository: OrderRepository;
+  private cartService: CartService;
+  private walletService: WalletService;
+  private productService: ProductService;
 
   constructor() {
     this.orderRepository = new OrderRepository();
+    this.cartService = new CartService();
+    this.walletService = new WalletService();
+    this.productService = new ProductService();
   }
 
   // ID ile sipariş bul
@@ -148,5 +163,107 @@ export class OrderService {
       throw new Error("Order not found");
     }
     return order;
+  }
+
+  // Create order from user's cart with transaction
+  async createOrderFromCart(data: CreateOrderFromCartData): Promise<Order> {
+    const { userId, walletId } = data;
+    
+    const queryRunner = AppDataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Get user's cart
+      const cart = await this.cartService.getUserCart(userId);
+      
+      if (!cart || !cart.items || cart.items.length === 0) {
+        throw new Error("Cart is empty");
+      }
+
+      // Get wallet and verify it belongs to the user
+      const wallet = await this.walletService.findById(walletId);
+      
+      if (!wallet) {
+        throw new Error("Wallet not found");
+      }
+
+      if (wallet.user.id !== userId) {
+        throw new Error("Wallet does not belong to user");
+      }
+
+      // Calculate total and verify currency consistency
+      let totalMinor = 0;
+      const orderItems = [];
+
+      for (const cartItem of cart.items) {
+        const product = cartItem.product;
+        
+        // Check if product currency matches wallet currency
+        if (product.currency !== wallet.currency) {
+          throw new Error(
+            `Product ${product.name} currency (${product.currency}) does not match wallet currency (${wallet.currency})`
+          );
+        }
+
+        // Check inventory
+        const isInStock = await this.productService.isInStock(product.id, cartItem.qty);
+        if (!isInStock) {
+          throw new Error(
+            `Insufficient stock for product ${product.name}. Required: ${cartItem.qty}, Available: ${product.stockQty}`
+          );
+        }
+
+        const itemTotal = product.priceMinor * cartItem.qty;
+        totalMinor += itemTotal;
+
+        orderItems.push({
+          productId: product.id,
+          qty: cartItem.qty,
+          unitPriceMinor: product.priceMinor,
+          currency: product.currency,
+        });
+      }
+
+      // Check wallet balance
+      if (wallet.balanceMinor < totalMinor) {
+        throw new Error(
+          `Insufficient wallet balance. Required: ${totalMinor}, Available: ${wallet.balanceMinor}`
+        );
+      }
+
+      // Decrease product stock for each item
+      for (const cartItem of cart.items) {
+        await this.productService.decreaseStock(cartItem.product.id, cartItem.qty);
+      }
+
+      // Decrease wallet balance
+      await this.walletService.decreaseBalance({
+        userId,
+        currency: wallet.currency,
+        amountMinor: totalMinor,
+      });
+
+      // Create the order
+      const order = await this.createOrder({
+        userId,
+        totalMinor,
+        currency: wallet.currency,
+        status: "CONFIRMED",
+        items: orderItems,
+      });
+
+      // Clear the user's cart
+      await this.cartService.clearUserCart(userId);
+
+      await queryRunner.commitTransaction();
+      
+      return order;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

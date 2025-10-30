@@ -3,6 +3,7 @@ export { default as productRoutes } from './productRoutes';
 export { default as categoryRoutes } from './categoryRoutes';
 export { default as cartRoutes } from './cartRoutes';
 export { default as walletRoutes } from './walletRoutes';
+export { default as orderRoutes } from './orderRoutes';
 export { default as adminUserRoutes } from './adminUserRoutes';
 export { default as adminCategoryRoutes } from './adminCategoryRoutes';
 export { default as adminProductRoutes } from './adminProductRoutes';
