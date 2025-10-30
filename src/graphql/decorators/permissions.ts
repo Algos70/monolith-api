@@ -161,241 +161,342 @@ export function RequireUserManagementWrite() {
 
 // Decorator for admin panel read permission (matching REST API)
 export function RequireAdminPanelReadPermissionForUser() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelReadPermissionForUser(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
 // Decorator for admin panel write permission (matching REST API)
 export function RequireAdminPanelWritePermissionForUser() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelWritePermissionForUser(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
 // Decorator for admin panel read permission for categories (matching REST API)
 export function RequireAdminPanelReadPermissionForCategory() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelReadPermissionForCategory(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
 // Decorator for admin panel write permission for categories (matching REST API)
 export function RequireAdminPanelWritePermissionForCategory() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelWritePermissionForCategory(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
 // Decorator for admin panel read permission for products (matching REST API)
 export function RequireAdminPanelReadPermissionForProducts() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelReadPermissionForProducts(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
 // Decorator for admin panel write permission for products (matching REST API)
 export function RequireAdminPanelWritePermissionForProducts() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelWritePermissionForProducts(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
 // Decorator for admin panel read permission for wallets (matching REST API)
 export function RequireAdminPanelReadPermissionForWallets() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelReadPermissionForWallets(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
 // Decorator for admin panel write permission for wallets (matching REST API)
 export function RequireAdminPanelWritePermissionForWallets() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelWritePermissionForWallets(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
 // Decorator for admin panel read permission for orders (matching REST API)
 export function RequireAdminPanelReadPermissionForOrders() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelReadPermissionForOrders(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
 // Decorator for admin panel write permission for orders (matching REST API)
 export function RequireAdminPanelWritePermissionForOrders() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelWritePermissionForOrders(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
 // Decorator for admin panel read permission for order items (matching REST API)
 export function RequireAdminPanelReadPermissionForOrderItems() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelReadPermissionForOrderItems(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
 // Decorator for admin panel write permission for order items (matching REST API)
 export function RequireAdminPanelWritePermissionForOrderItems() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelWritePermissionForOrderItems(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
 // Decorator for admin panel read permission for carts (matching REST API)
 export function RequireAdminPanelReadPermissionForCarts() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelReadPermissionForCarts(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
 // Decorator for admin panel write permission for carts (matching REST API)
 export function RequireAdminPanelWritePermissionForCarts() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelWritePermissionForCarts(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
 // Decorator for user wallet read permission (matching REST API)
 export function RequireWalletReadPermission() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireWalletRead(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
 // Decorator for user wallet write permission (matching REST API)
 export function RequireWalletWritePermission() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireWalletWrite(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
-    
+
     return descriptor;
   };
 }
 
+// Decorator for user orders read permission (matching REST API)
+export function RequireOrdersReadPermission() {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    const originalMethod = descriptor.value;
+
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requirePermission(context as GraphQLContext, "orders_read");
+      return originalMethod.apply(this, args);
+    };
+
+    return descriptor;
+  };
+}
+
+// Decorator for user orders write permission (matching REST API)
+export function RequireOrdersWritePermission() {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    const originalMethod = descriptor.value;
+
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requirePermission(context as GraphQLContext, "orders_write");
+      return originalMethod.apply(this, args);
+    };
+
+    return descriptor;
+  };
+}

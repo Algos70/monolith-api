@@ -9,6 +9,7 @@ import { cartResolvers } from './cartResolvers';
 import { productResolvers } from './productResolvers';
 import { categoryResolvers } from './categoryResolvers';
 import { walletResolvers } from './walletResolvers';
+import { orderResolvers } from './orderResolvers';
 
 export const resolvers = {
   Query: {
@@ -22,7 +23,8 @@ export const resolvers = {
     ...cartResolvers.Query,
     ...productResolvers.Query,
     ...categoryResolvers.Query,
-    ...walletResolvers.Query
+    ...walletResolvers.Query,
+    ...orderResolvers.Query
   },
   Mutation: {
     ...adminCategoryResolvers.Mutation,
@@ -32,6 +34,7 @@ export const resolvers = {
     ...adminOrderItemResolvers.Mutation,
     ...adminCartResolvers.Mutation,
     ...cartResolvers.Mutation,
-    ...walletResolvers.Mutation
+    ...walletResolvers.Mutation,
+    ...orderResolvers.Mutation
   }
 };

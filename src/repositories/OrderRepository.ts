@@ -23,7 +23,7 @@ export class OrderRepository {
   async findByUser(userId: string): Promise<Order[]> {
     return await this.orderRepository.find({
       where: { user: { id: userId } },
-      relations: ["items", "items.product"],
+      relations: ["user", "items", "items.product", "items.product.category"],
       order: { createdAt: "DESC" }
     });
   }
