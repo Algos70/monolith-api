@@ -60,14 +60,14 @@ export class CategoryResolvers {
     context: GraphQLContext
   ) {
     try {
-      // First find the category by slug
+      // Get the category with products directly by slug
       const category = await categoryService.findBySlug(slug);
       
       if (!category) {
         throw new UserInputError("Category not found");
       }
 
-      // Then get the category with products
+      // Get the full category with products using the ID
       const categoryWithProducts = await categoryService.getCategoryWithProductsForAdmin(
         category.id
       );
@@ -84,11 +84,7 @@ export class CategoryResolvers {
       const paginatedProducts = products.slice(startIndex, endIndex);
 
       return {
-        category: {
-          id: category.id,
-          name: category.name,
-          slug: category.slug,
-        },
+        category: categoryWithProducts, // Use the full category object with all fields
         products: paginatedProducts,
         pagination: {
           page,

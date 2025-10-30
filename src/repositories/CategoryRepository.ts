@@ -12,14 +12,14 @@ export class CategoryRepository {
   async findById(id: string): Promise<Category | null> {
     return await this.repository.findOne({
       where: { id },
-      relations: ["products"]
+      relations: ["products", "products.category"]
     });
   }
 
   async findBySlug(slug: string): Promise<Category | null> {
     return await this.repository.findOne({
       where: { slug },
-      relations: ["products"]
+      relations: ["products", "products.category"]
     });
   }
 
@@ -45,7 +45,7 @@ export class CategoryRepository {
 
   async findAll(): Promise<Category[]> {
     return await this.repository.find({
-      relations: ["products"]
+      relations: ["products", "products.category"]
     });
   }
 }
