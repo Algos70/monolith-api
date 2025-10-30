@@ -88,35 +88,17 @@ router.get(
         return res.status(404).json({ error: "Category not found" });
       }
 
-      // Then get the category with products
-      const categoryWithProducts =
-        await categoryService.getCategoryWithProductsForAdmin(category.id);
-
-      // Filter products based on stock if needed
-      let products = categoryWithProducts.products || [];
-      if (inStockOnly) {
-        products = products.filter((product) => product.stockQty > 0);
-      }
-
-      // Simple pagination
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedProducts = products.slice(startIndex, endIndex);
-
-      res.json({
-        category: {
-          id: category.id,
-          name: category.name,
-          slug: category.slug,
-        },
-        products: paginatedProducts,
-        pagination: {
+      // Get paginated products using the new method
+      const result = await categoryService.getCategoryProductsPaginated(
+        category.id,
+        {
           page,
           limit,
-          total: products.length,
-          totalPages: Math.ceil(products.length / limit),
-        },
-      });
+          inStockOnly,
+        }
+      );
+
+      res.json(result);
     } catch (error) {
       console.error("Get category products error:", error);
       res.status(500).json({ error: "Failed to fetch category products" });

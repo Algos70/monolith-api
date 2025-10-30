@@ -60,39 +60,19 @@ export class CategoryResolvers {
     context: GraphQLContext
   ) {
     try {
-      // Get the category with products directly by slug
+      // First find the category by slug
       const category = await categoryService.findBySlug(slug);
       
       if (!category) {
         throw new UserInputError("Category not found");
       }
 
-      // Get the full category with products using the ID
-      const categoryWithProducts = await categoryService.getCategoryWithProductsForAdmin(
-        category.id
-      );
-
-      // Filter products based on stock if needed
-      let products = categoryWithProducts.products || [];
-      if (inStockOnly) {
-        products = products.filter((product) => product.stockQty > 0);
-      }
-
-      // Simple pagination
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedProducts = products.slice(startIndex, endIndex);
-
-      return {
-        category: categoryWithProducts, // Use the full category object with all fields
-        products: paginatedProducts,
-        pagination: {
-          page,
-          limit,
-          total: products.length,
-          totalPages: Math.ceil(products.length / limit),
-        },
-      };
+      // Get paginated products using the new method
+      return await categoryService.getCategoryProductsPaginated(category.id, {
+        page,
+        limit,
+        inStockOnly,
+      });
     } catch (error) {
       console.error("GraphQL categoryProducts error:", error);
       if (error instanceof UserInputError) {

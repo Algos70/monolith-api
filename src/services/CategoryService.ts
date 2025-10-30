@@ -134,4 +134,44 @@ export class CategoryService {
     }
     return category;
   }
+
+  // Kategori ürünlerini paginated olarak getir
+  async getCategoryProductsPaginated(
+    categoryId: string,
+    options: {
+      page?: number;
+      limit?: number;
+      inStockOnly?: boolean;
+    } = {}
+  ) {
+    const { page = 1, limit = 10, inStockOnly = true } = options;
+
+    const category = await this.findById(categoryId);
+    if (!category) {
+      throw new Error("Category not found");
+    }
+
+    // ProductService'i kullanarak paginated products getir
+    const productService = new (
+      await import("./ProductService")
+    ).ProductService();
+    const productsResult = await productService.getProductsForAdmin({
+      page,
+      limit,
+      categoryId,
+      inStockOnly,
+    });
+
+    return {
+      category: {
+        id: category.id,
+        name: category.name,
+        slug: category.slug,
+        createdAt: category.createdAt,
+        updatedAt: category.updatedAt,
+      },
+      products: productsResult.products,
+      pagination: productsResult.pagination,
+    };
+  }
 }
