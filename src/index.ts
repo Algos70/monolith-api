@@ -9,7 +9,7 @@ import { expressMiddleware } from "@as-integrations/express5";
 import { AppDataSource } from "./data-source";
 import { RedisClient } from "./cache/RedisClient";
 import { verifyBearer, requireBearerRoles } from "./auth/middleware";
-import { authRoutes, adminUserRoutes, adminCategoryRoutes, adminProductRoutes, adminWalletRoutes, adminOrderRoutes, adminOrderItemRoutes, adminCartRoutes } from "./rest";
+import { authRoutes, productRoutes, categoryRoutes, adminUserRoutes, adminCategoryRoutes, adminProductRoutes, adminWalletRoutes, adminOrderRoutes, adminOrderItemRoutes, adminCartRoutes } from "./rest";
 import { typeDefs, resolvers } from "./graphql";
 
 config();
@@ -126,6 +126,12 @@ const startServer = async () => {
 
     // Add routes after session middleware
     app.use("/api", authRoutes);
+    
+    // Public/User routes
+    app.use("/api/products", productRoutes);
+    app.use("/api/categories", categoryRoutes);
+    
+    // Admin routes
     app.use("/api/admin/users", adminUserRoutes);
     app.use("/api/admin/categories", adminCategoryRoutes);
     app.use("/api/admin/products", adminProductRoutes);

@@ -1,4 +1,6 @@
 export { default as authRoutes } from './authRoutes';
+export { default as productRoutes } from './productRoutes';
+export { default as categoryRoutes } from './categoryRoutes';
 export { default as adminUserRoutes } from './adminUserRoutes';
 export { default as adminCategoryRoutes } from './adminCategoryRoutes';
 export { default as adminProductRoutes } from './adminProductRoutes';
