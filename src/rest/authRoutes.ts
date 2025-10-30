@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { AuthService } from "../services/AuthService";
 import { SessionService } from "../services/SessionService";
+import { rateLimitMiddleware } from "../cache/RateLimitMiddleware";
 
 const router = Router();
 
@@ -30,82 +31,94 @@ declare module "express-session" {
 }
 
 // Login route - redirect to Keycloak with PKCE
-router.get("/login", async (req: Request, res: Response) => {
-  try {
-    const { codeVerifier, codeChallenge } = authService.generatePKCE();
-    const state = authService.generateState();
+router.get(
+  "/login",
+  rateLimitMiddleware.createAuthRateLimit(),
+  async (req: Request, res: Response) => {
+    try {
+      const { codeVerifier, codeChallenge } = authService.generatePKCE();
+      const state = authService.generateState();
 
-    // Store PKCE data in session
-    SessionService.storePKCEData(req, codeVerifier, state);
+      // Store PKCE data in session
+      SessionService.storePKCEData(req, codeVerifier, state);
 
-    // Save session before redirect
-    await SessionService.saveSession(req);
+      // Save session before redirect
+      await SessionService.saveSession(req);
 
-    const redirectUri = authService.buildRedirectUri(
-      req.protocol,
-      req.get("host") || ""
-    );
-    const authUrl = authService.buildAuthUrl(redirectUri, codeChallenge, state);
+      const redirectUri = authService.buildRedirectUri(
+        req.protocol,
+        req.get("host") || ""
+      );
+      const authUrl = authService.buildAuthUrl(
+        redirectUri,
+        codeChallenge,
+        state
+      );
 
-    res.redirect(authUrl);
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ error: "Login failed" });
+      res.redirect(authUrl);
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Login failed" });
+    }
   }
-});
+);
 
 // Callback route - handle Keycloak callback
-router.get("/callback", async (req: Request, res: Response) => {
-  try {
-    const { code, state } = req.query;
-    const pkceData = SessionService.getPKCEData(req);
+router.get(
+  "/callback",
+  rateLimitMiddleware.createAuthRateLimit(),
+  async (req: Request, res: Response) => {
+    try {
+      const { code, state } = req.query;
+      const pkceData = SessionService.getPKCEData(req);
 
-    // Verify state parameter
-    if (
-      !state ||
-      !authService.validateState(state as string, pkceData.state || "")
-    ) {
-      return res.status(400).json({ error: "Invalid state parameter" });
+      // Verify state parameter
+      if (
+        !state ||
+        !authService.validateState(state as string, pkceData.state || "")
+      ) {
+        return res.status(400).json({ error: "Invalid state parameter" });
+      }
+
+      if (!code || !pkceData.codeVerifier) {
+        return res
+          .status(400)
+          .json({ error: "Missing authorization code or code verifier" });
+      }
+
+      const redirectUri = authService.buildRedirectUri(
+        req.protocol,
+        req.get("host") || ""
+      );
+
+      // Exchange code for tokens
+      const tokens = await authService.exchangeCodeForTokens(
+        code as string,
+        redirectUri,
+        pkceData.codeVerifier
+      );
+
+      // Get user info
+      const userInfo = await authService.getUserInfo(tokens.access_token);
+
+      // Sync user with database and create session
+      const userSession = await authService.syncUserAndCreateSession(
+        userInfo,
+        tokens
+      );
+      SessionService.storeUser(req, userSession);
+
+      // Clean up temporary session data
+      SessionService.clearTemporaryData(req);
+
+      // Redirect to frontend
+      res.redirect(authService.getSuccessRedirectUrl());
+    } catch (error) {
+      console.error("Auth callback error:", error);
+      res.redirect(authService.getErrorRedirectUrl());
     }
-
-    if (!code || !pkceData.codeVerifier) {
-      return res
-        .status(400)
-        .json({ error: "Missing authorization code or code verifier" });
-    }
-
-    const redirectUri = authService.buildRedirectUri(
-      req.protocol,
-      req.get("host") || ""
-    );
-
-    // Exchange code for tokens
-    const tokens = await authService.exchangeCodeForTokens(
-      code as string,
-      redirectUri,
-      pkceData.codeVerifier
-    );
-
-    // Get user info
-    const userInfo = await authService.getUserInfo(tokens.access_token);
-
-    // Sync user with database and create session
-    const userSession = await authService.syncUserAndCreateSession(
-      userInfo,
-      tokens
-    );
-    SessionService.storeUser(req, userSession);
-
-    // Clean up temporary session data
-    SessionService.clearTemporaryData(req);
-
-    // Redirect to frontend
-    res.redirect(authService.getSuccessRedirectUrl());
-  } catch (error) {
-    console.error("Auth callback error:", error);
-    res.redirect(authService.getErrorRedirectUrl());
   }
-});
+);
 
 // Logout route
 router.post("/logout", async (req: Request, res: Response) => {

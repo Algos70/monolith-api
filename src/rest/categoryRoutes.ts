@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { CategoryService } from "../services/CategoryService";
 import { requireCategoriesReadPermission } from "../auth";
+import { rateLimitMiddleware } from "../cache/RateLimitMiddleware";
 
 const router = Router();
 const categoryService = new CategoryService();
@@ -8,6 +9,7 @@ const categoryService = new CategoryService();
 // GET /categories - List all categories with pagination (public)
 router.get(
   "/",
+  rateLimitMiddleware.createCatalogRateLimit(),
   requireCategoriesReadPermission,
   async (req: Request, res: Response) => {
     try {
@@ -31,6 +33,7 @@ router.get(
 // GET /categories/:id - Get category by ID (public)
 router.get(
   "/:id",
+  rateLimitMiddleware.createCatalogRateLimit(),
   requireCategoriesReadPermission,
   async (req: Request, res: Response) => {
     try {
@@ -52,6 +55,7 @@ router.get(
 // GET /categories/slug/:slug - Get category by slug (public)
 router.get(
   "/slug/:slug",
+  rateLimitMiddleware.createCatalogRateLimit(),
   requireCategoriesReadPermission,
   async (req: Request, res: Response) => {
     try {
@@ -73,6 +77,7 @@ router.get(
 // GET /categories/slug/:slug/products - Get products in a category by slug
 router.get(
   "/slug/:slug/products",
+  rateLimitMiddleware.createCatalogRateLimit(),
   requireCategoriesReadPermission,
   async (req: Request, res: Response) => {
     try {

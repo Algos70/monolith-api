@@ -1,4 +1,5 @@
 export { CacheService } from './CacheService';
+export { RateLimitService } from './RateLimitService';
 export { AuthService } from './AuthService';
 export { SessionService } from './SessionService';
 export { UserService } from './UserService';

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { ProductService } from "../services/ProductService";
 import { requireProductsReadPermission } from "../auth";
+import { rateLimitMiddleware } from "../cache/RateLimitMiddleware";
 
 
 const router = Router();
@@ -9,6 +10,7 @@ const productService = new ProductService();
 // GET /products - List all products with pagination (public)
 router.get(
   "/",
+  rateLimitMiddleware.createCatalogRateLimit(),
   requireProductsReadPermission,
   async (req: Request, res: Response) => {
   try {
@@ -35,6 +37,7 @@ router.get(
 // GET /products/:id - Get product by ID (public)
 router.get(
   "/:id",
+  rateLimitMiddleware.createCatalogRateLimit(),
   requireProductsReadPermission,
   async (req: Request, res: Response) => {
   try {
@@ -53,6 +56,7 @@ router.get(
 // GET /products/slug/:slug - Get product by slug (public)
 router.get(
   "/slug/:slug",
+  rateLimitMiddleware.createCatalogRateLimit(),
   requireProductsReadPermission,
   async (req: Request, res: Response) => {
   try {
@@ -73,6 +77,7 @@ router.get(
 // GET /products/category/:categoryId - Get products by category (public)
 router.get(
   "/category/:categoryId",
+  rateLimitMiddleware.createCatalogRateLimit(),
   requireProductsReadPermission,
   async (req: Request, res: Response) => {
   try {
@@ -89,6 +94,7 @@ router.get(
 // GET /products/:id/availability - Check product availability
 router.get(
   "/:id/availability",
+  rateLimitMiddleware.createCatalogRateLimit(),
   requireProductsReadPermission,
   async (req: Request, res: Response) => {
   try {
@@ -116,12 +122,12 @@ router.get(
 // GET /products/featured - Get featured products
 router.get(
   "/featured",
+  rateLimitMiddleware.createCatalogRateLimit(),
   requireProductsReadPermission,
   async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 8;
     
-    // This would need to be implemented in ProductService
     // For now, we'll get recent products in stock
     const result = await productService.getProductsForAdmin({
       page: 1,
@@ -139,6 +145,7 @@ router.get(
 // GET /products/search - Advanced product search
 router.get(
   "/search",
+  rateLimitMiddleware.createCatalogRateLimit(),
   requireProductsReadPermission,
   async (req: Request, res: Response) => {
   try {

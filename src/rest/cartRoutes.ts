@@ -5,6 +5,7 @@ import {
   requireCartWritePermissions,
 } from "../auth";
 import { SessionService } from "../services/SessionService";
+import { rateLimitMiddleware } from "../cache/RateLimitMiddleware";
 
 const router = Router();
 const cartService = new CartService();
@@ -12,6 +13,10 @@ const cartService = new CartService();
 // GET /cart - Get current user's cart with all items
 router.get(
   "/",
+  rateLimitMiddleware.createIPRateLimit({
+    maxRequests: 200,
+    message: "Too many cart requests",
+  }),
   requireCartReadPermissions,
   async (req: Request, res: Response) => {
     try {
@@ -30,6 +35,10 @@ router.get(
 // POST /cart/items - Add item to current user's cart
 router.post(
   "/items",
+  rateLimitMiddleware.createIPRateLimit({
+    maxRequests: 50,
+    message: "Too many add to cart requests",
+  }),
   requireCartWritePermissions,
   async (req: Request, res: Response) => {
     try {
@@ -61,6 +70,10 @@ router.post(
 // DELETE /cart/items/:productId - Remove item from current user's cart
 router.delete(
   "/items/:productId",
+  rateLimitMiddleware.createIPRateLimit({
+    maxRequests: 30,
+    message: "Too many remove from cart requests",
+  }),
   requireCartWritePermissions,
   async (req: Request, res: Response) => {
     try {
@@ -83,6 +96,10 @@ router.delete(
 // PUT /cart/items/:productId - Update item quantity in current user's cart
 router.put(
   "/items/:productId",
+  rateLimitMiddleware.createIPRateLimit({
+    maxRequests: 50,
+    message: "Too many update quantity requests",
+  }),
   requireCartWritePermissions,
   async (req: Request, res: Response) => {
     try {
@@ -116,6 +133,10 @@ router.put(
 // PATCH /cart/items/:productId/decrease - Decrease item quantity in current user's cart
 router.patch(
   "/items/:productId/decrease",
+  rateLimitMiddleware.createIPRateLimit({
+    maxRequests: 50,
+    message: "Too many decrease quantity requests",
+  }),
   requireCartWritePermissions,
   async (req: Request, res: Response) => {
     try {
@@ -149,6 +170,10 @@ router.patch(
 // DELETE /cart - Clear current user's cart
 router.delete(
   "/",
+  rateLimitMiddleware.createIPRateLimit({
+    maxRequests: 10,
+    message: "Too many clear cart requests",
+  }),
   requireCartWritePermissions,
   async (req: Request, res: Response) => {
     try {

@@ -11,6 +11,9 @@ import { RedisClient } from "./cache/RedisClient";
 import { verifyBearer, requireBearerRoles } from "./auth/middleware";
 import { authRoutes, productRoutes, categoryRoutes, cartRoutes, walletRoutes, orderRoutes, adminUserRoutes, adminCategoryRoutes, adminProductRoutes, adminWalletRoutes, adminOrderRoutes, adminOrderItemRoutes, adminCartRoutes } from "./rest";
 import { typeDefs, resolvers } from "./graphql";
+import { rateLimitMiddleware } from "./cache/RateLimitMiddleware";
+import { createGraphQLRateLimitPlugin } from "./graphql/plugins/rateLimitPlugin";
+import { formatError } from "./graphql/utils/errorFormatter";
 
 config();
 
@@ -95,10 +98,24 @@ const startServer = async () => {
     // Apply session middleware
     app.use(sessionMiddleware);
 
+    // Apply general rate limiting (before routes)
+    app.use("/api", rateLimitMiddleware.createIPRateLimit({
+      windowMs: 60000, // 1 minute
+      maxRequests: 100, // 100 requests per minute per IP
+      message: "Too many API requests"
+    }));
+
     // Create Apollo Server
     const server = new ApolloServer({
       typeDefs,
       resolvers,
+      plugins: [
+        createGraphQLRateLimitPlugin({
+          generalLimit: { windowMs: 60000, maxRequests: 200 }, // 200 GraphQL req/min
+          // queryLimits are now defined in the plugin constructor with all operations
+        })
+      ],
+      formatError,
     });
 
     // Start Apollo Server
