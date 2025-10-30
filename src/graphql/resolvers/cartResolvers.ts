@@ -39,6 +39,9 @@ export class CartResolvers {
       if (error instanceof Error && error.message.includes("not found")) {
         throw new UserInputError(error.message);
       }
+      if (error instanceof Error && error.message.includes("currency")) {
+        throw new UserInputError(error.message);
+      }
       throw new Error("Failed to add item to cart");
     }
   }
