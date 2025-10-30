@@ -19,13 +19,13 @@ export class RateLimitService {
   // Default rate limit configurations
   private readonly configs = {
     // General API limits
-    api: { windowMs: 60000, maxRequests: 100 }, // 100 req/min
-    auth: { windowMs: 300000, maxRequests: 5 }, // 5 req/5min for auth
-    catalog: { windowMs: 60000, maxRequests: 200 }, // 200 req/min for catalog
+    api: { windowMs: 60000, maxRequests: 300 }, // 300 req/min (3x)
+    auth: { windowMs: 300000, maxRequests: 15 }, // 15 req/5min for auth (3x)
+    catalog: { windowMs: 60000, maxRequests: 600 }, // 600 req/min for catalog (3x)
     
     // User-specific limits (higher limits for authenticated users)
-    userApi: { windowMs: 60000, maxRequests: 500 }, // 500 req/min
-    userCatalog: { windowMs: 60000, maxRequests: 1000 }, // 1000 req/min
+    userApi: { windowMs: 60000, maxRequests: 1500 }, // 1500 req/min (3x)
+    userCatalog: { windowMs: 60000, maxRequests: 3000 }, // 3000 req/min (3x)
   };
 
   constructor() {
@@ -107,8 +107,10 @@ export class RateLimitService {
         // First request in window, set with TTL
         await this.cacheService.set(key, newCount, windowSeconds);
       } else {
-        // Increment existing counter
-        await this.cacheService.set(key, newCount);
+        // Increment existing counter but preserve TTL
+        const currentTTL = await this.getTTL(key);
+        const ttlToUse = currentTTL > 0 ? currentTTL : windowSeconds;
+        await this.cacheService.set(key, newCount, ttlToUse);
       }
 
       const ttl = await this.getTTL(key);

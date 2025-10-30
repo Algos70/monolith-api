@@ -14,7 +14,7 @@ const cartService = new CartService();
 router.get(
   "/",
   rateLimitMiddleware.createIPRateLimit({
-    maxRequests: 200,
+    maxRequests: 600,
     message: "Too many cart requests",
   }),
   requireCartReadPermissions,
@@ -36,7 +36,7 @@ router.get(
 router.post(
   "/items",
   rateLimitMiddleware.createIPRateLimit({
-    maxRequests: 50,
+    maxRequests: 150,
     message: "Too many add to cart requests",
   }),
   requireCartWritePermissions,
@@ -71,7 +71,7 @@ router.post(
 router.delete(
   "/items/:productId",
   rateLimitMiddleware.createIPRateLimit({
-    maxRequests: 30,
+    maxRequests: 90,
     message: "Too many remove from cart requests",
   }),
   requireCartWritePermissions,
@@ -97,7 +97,7 @@ router.delete(
 router.put(
   "/items/:productId",
   rateLimitMiddleware.createIPRateLimit({
-    maxRequests: 50,
+    maxRequests: 150,
     message: "Too many update quantity requests",
   }),
   requireCartWritePermissions,
@@ -134,7 +134,7 @@ router.put(
 router.patch(
   "/items/:productId/decrease",
   rateLimitMiddleware.createIPRateLimit({
-    maxRequests: 50,
+    maxRequests: 150,
     message: "Too many decrease quantity requests",
   }),
   requireCartWritePermissions,
@@ -171,7 +171,7 @@ router.patch(
 router.delete(
   "/",
   rateLimitMiddleware.createIPRateLimit({
-    maxRequests: 10,
+    maxRequests: 30,
     message: "Too many clear cart requests",
   }),
   requireCartWritePermissions,

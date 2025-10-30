@@ -13,7 +13,7 @@ const orderService = new OrderService();
 // GET /orders - Get user's orders
 router.get(
   "/",
-  rateLimitMiddleware.createIPRateLimit({ maxRequests: 100, message: "Too many order requests" }),
+  rateLimitMiddleware.createIPRateLimit({ maxRequests: 300, message: "Too many order requests" }),
   requireOrdersReadPermission,
   async (req: Request, res: Response) => {
     try {
@@ -36,7 +36,7 @@ router.get(
 // GET /orders/:id - Get specific order by ID (user can only see their own orders)
 router.get(
   "/:id",
-  rateLimitMiddleware.createIPRateLimit({ maxRequests: 150, message: "Too many order detail requests" }),
+  rateLimitMiddleware.createIPRateLimit({ maxRequests: 450, message: "Too many order detail requests" }),
   requireOrdersReadPermission,
   async (req: Request, res: Response) => {
     try {
@@ -70,7 +70,7 @@ router.get(
 // POST /orders - Create new order from cart
 router.post(
   "/",
-  rateLimitMiddleware.createIPRateLimit({ maxRequests: 10, message: "Too many order creation requests" }),
+  rateLimitMiddleware.createIPRateLimit({ maxRequests: 30, message: "Too many order creation requests" }),
   requireOrdersWritePermission,
   async (req: Request, res: Response) => {
     try {

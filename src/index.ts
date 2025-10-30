@@ -101,7 +101,7 @@ const startServer = async () => {
     // Apply general rate limiting (before routes)
     app.use("/api", rateLimitMiddleware.createIPRateLimit({
       windowMs: 60000, // 1 minute
-      maxRequests: 100, // 100 requests per minute per IP
+      maxRequests: 300, // 300 requests per minute per IP (3x)
       message: "Too many API requests"
     }));
 
@@ -111,7 +111,7 @@ const startServer = async () => {
       resolvers,
       plugins: [
         createGraphQLRateLimitPlugin({
-          generalLimit: { windowMs: 60000, maxRequests: 200 }, // 200 GraphQL req/min
+          generalLimit: { windowMs: 60000, maxRequests: 600 }, // 600 GraphQL req/min (3x)
           // queryLimits are now defined in the plugin constructor with all operations
         })
       ],

@@ -17,121 +17,121 @@ export class GraphQLRateLimitPlugin implements ApolloServerPlugin {
   constructor(config: GraphQLRateLimitConfig = {}) {
     this.rateLimitService = new RateLimitService();
     this.config = {
-      generalLimit: { windowMs: 60000, maxRequests: 100 }, // 100 req/min default
+      generalLimit: { windowMs: 60000, maxRequests: 300 }, // 300 req/min default (3x)
       queryLimits: {
         // PUBLIC CATALOG QUERIES - High limits for user-facing operations
-        products: { windowMs: 60000, maxRequests: 300 },
-        product: { windowMs: 60000, maxRequests: 400 },
-        productBySlug: { windowMs: 60000, maxRequests: 400 },
-        productsByCategory: { windowMs: 60000, maxRequests: 300 },
-        productAvailability: { windowMs: 60000, maxRequests: 200 },
-        featuredProducts: { windowMs: 60000, maxRequests: 100 },
-        searchProducts: { windowMs: 60000, maxRequests: 200 },
+        products: { windowMs: 60000, maxRequests: 900 },
+        product: { windowMs: 60000, maxRequests: 1200 },
+        productBySlug: { windowMs: 60000, maxRequests: 1200 },
+        productsByCategory: { windowMs: 60000, maxRequests: 900 },
+        productAvailability: { windowMs: 60000, maxRequests: 600 },
+        featuredProducts: { windowMs: 60000, maxRequests: 300 },
+        searchProducts: { windowMs: 60000, maxRequests: 600 },
 
-        categories: { windowMs: 60000, maxRequests: 300 },
-        category: { windowMs: 60000, maxRequests: 400 },
-        categoryBySlug: { windowMs: 60000, maxRequests: 400 },
-        categoryProducts: { windowMs: 60000, maxRequests: 300 },
+        categories: { windowMs: 60000, maxRequests: 900 },
+        category: { windowMs: 60000, maxRequests: 1200 },
+        categoryBySlug: { windowMs: 60000, maxRequests: 1200 },
+        categoryProducts: { windowMs: 60000, maxRequests: 900 },
 
         // USER OPERATIONS - Moderate limits
-        userCart: { windowMs: 60000, maxRequests: 200 },
-        userOrders: { windowMs: 60000, maxRequests: 100 },
-        userOrder: { windowMs: 60000, maxRequests: 150 },
-        userWallets: { windowMs: 60000, maxRequests: 100 },
-        userWalletByCurrency: { windowMs: 60000, maxRequests: 150 },
-        userWalletBalance: { windowMs: 60000, maxRequests: 100 },
+        userCart: { windowMs: 60000, maxRequests: 600 },
+        userOrders: { windowMs: 60000, maxRequests: 300 },
+        userOrder: { windowMs: 60000, maxRequests: 450 },
+        userWallets: { windowMs: 60000, maxRequests: 300 },
+        userWalletByCurrency: { windowMs: 60000, maxRequests: 450 },
+        userWalletBalance: { windowMs: 60000, maxRequests: 300 },
 
         // USER MUTATIONS - Stricter limits
-        addItemToCart: { windowMs: 60000, maxRequests: 50 },
-        updateItemQuantity: { windowMs: 60000, maxRequests: 50 },
-        decreaseItemQuantity: { windowMs: 60000, maxRequests: 50 },
-        removeItemFromCart: { windowMs: 60000, maxRequests: 30 },
-        clearCart: { windowMs: 60000, maxRequests: 10 },
-        createOrderFromCart: { windowMs: 60000, maxRequests: 10 },
-        createUserWallet: { windowMs: 60000, maxRequests: 5 },
-        increaseUserWalletBalance: { windowMs: 60000, maxRequests: 20 },
-        deleteUserWallet: { windowMs: 60000, maxRequests: 5 },
-        transferFromUserWallet: { windowMs: 60000, maxRequests: 10 },
+        addItemToCart: { windowMs: 60000, maxRequests: 150 },
+        updateItemQuantity: { windowMs: 60000, maxRequests: 150 },
+        decreaseItemQuantity: { windowMs: 60000, maxRequests: 150 },
+        removeItemFromCart: { windowMs: 60000, maxRequests: 90 },
+        clearCart: { windowMs: 60000, maxRequests: 30 },
+        createOrderFromCart: { windowMs: 60000, maxRequests: 30 },
+        createUserWallet: { windowMs: 60000, maxRequests: 15 },
+        increaseUserWalletBalance: { windowMs: 60000, maxRequests: 60 },
+        deleteUserWallet: { windowMs: 60000, maxRequests: 15 },
+        transferFromUserWallet: { windowMs: 60000, maxRequests: 30 },
 
         // ADMIN QUERIES - Moderate limits
-        adminProducts: { windowMs: 60000, maxRequests: 100 },
-        adminProduct: { windowMs: 60000, maxRequests: 150 },
-        adminProductBySlug: { windowMs: 60000, maxRequests: 150 },
-        adminProductsByCategory: { windowMs: 60000, maxRequests: 100 },
-        adminProductStockCheck: { windowMs: 60000, maxRequests: 200 },
+        adminProducts: { windowMs: 60000, maxRequests: 300 },
+        adminProduct: { windowMs: 60000, maxRequests: 450 },
+        adminProductBySlug: { windowMs: 60000, maxRequests: 450 },
+        adminProductsByCategory: { windowMs: 60000, maxRequests: 300 },
+        adminProductStockCheck: { windowMs: 60000, maxRequests: 600 },
 
-        adminCategories: { windowMs: 60000, maxRequests: 100 },
-        adminCategory: { windowMs: 60000, maxRequests: 150 },
-        adminCategoryBySlug: { windowMs: 60000, maxRequests: 150 },
+        adminCategories: { windowMs: 60000, maxRequests: 300 },
+        adminCategory: { windowMs: 60000, maxRequests: 450 },
+        adminCategoryBySlug: { windowMs: 60000, maxRequests: 450 },
 
-        adminUsers: { windowMs: 60000, maxRequests: 100 },
-        adminUser: { windowMs: 60000, maxRequests: 150 },
-        adminUserWithRelations: { windowMs: 60000, maxRequests: 100 },
+        adminUsers: { windowMs: 60000, maxRequests: 300 },
+        adminUser: { windowMs: 60000, maxRequests: 450 },
+        adminUserWithRelations: { windowMs: 60000, maxRequests: 300 },
 
-        adminOrders: { windowMs: 60000, maxRequests: 100 },
-        adminOrder: { windowMs: 60000, maxRequests: 150 },
-        adminOrdersByStatus: { windowMs: 60000, maxRequests: 100 },
-        adminOrdersByUser: { windowMs: 60000, maxRequests: 100 },
+        adminOrders: { windowMs: 60000, maxRequests: 300 },
+        adminOrder: { windowMs: 60000, maxRequests: 450 },
+        adminOrdersByStatus: { windowMs: 60000, maxRequests: 300 },
+        adminOrdersByUser: { windowMs: 60000, maxRequests: 300 },
 
-        adminOrderItems: { windowMs: 60000, maxRequests: 100 },
-        adminOrderItem: { windowMs: 60000, maxRequests: 150 },
-        adminOrderItemsByOrder: { windowMs: 60000, maxRequests: 100 },
-        adminOrderItemsByProduct: { windowMs: 60000, maxRequests: 100 },
+        adminOrderItems: { windowMs: 60000, maxRequests: 300 },
+        adminOrderItem: { windowMs: 60000, maxRequests: 450 },
+        adminOrderItemsByOrder: { windowMs: 60000, maxRequests: 300 },
+        adminOrderItemsByProduct: { windowMs: 60000, maxRequests: 300 },
 
-        adminWallets: { windowMs: 60000, maxRequests: 100 },
-        adminWallet: { windowMs: 60000, maxRequests: 150 },
-        adminWalletsByUser: { windowMs: 60000, maxRequests: 100 },
-        adminWalletsByCurrency: { windowMs: 60000, maxRequests: 100 },
-        adminWalletByUserAndCurrency: { windowMs: 60000, maxRequests: 150 },
-        adminWalletBalance: { windowMs: 60000, maxRequests: 100 },
+        adminWallets: { windowMs: 60000, maxRequests: 300 },
+        adminWallet: { windowMs: 60000, maxRequests: 450 },
+        adminWalletsByUser: { windowMs: 60000, maxRequests: 300 },
+        adminWalletsByCurrency: { windowMs: 60000, maxRequests: 300 },
+        adminWalletByUserAndCurrency: { windowMs: 60000, maxRequests: 450 },
+        adminWalletBalance: { windowMs: 60000, maxRequests: 300 },
 
-        adminCarts: { windowMs: 60000, maxRequests: 100 },
-        adminCart: { windowMs: 60000, maxRequests: 150 },
-        adminCartWithRelations: { windowMs: 60000, maxRequests: 100 },
-        adminCartsByUser: { windowMs: 60000, maxRequests: 100 },
-        adminCartStats: { windowMs: 60000, maxRequests: 50 },
+        adminCarts: { windowMs: 60000, maxRequests: 300 },
+        adminCart: { windowMs: 60000, maxRequests: 450 },
+        adminCartWithRelations: { windowMs: 60000, maxRequests: 300 },
+        adminCartsByUser: { windowMs: 60000, maxRequests: 300 },
+        adminCartStats: { windowMs: 60000, maxRequests: 150 },
 
         // ADMIN MUTATIONS - Strict limits for data modification
         // Product mutations
-        adminCreateProduct: { windowMs: 60000, maxRequests: 10 },
-        adminUpdateProduct: { windowMs: 60000, maxRequests: 20 },
-        adminDeleteProduct: { windowMs: 60000, maxRequests: 5 },
-        adminIncreaseProductStock: { windowMs: 60000, maxRequests: 30 },
-        adminDecreaseProductStock: { windowMs: 60000, maxRequests: 30 },
-        adminUpdateProductPrice: { windowMs: 60000, maxRequests: 20 },
+        adminCreateProduct: { windowMs: 60000, maxRequests: 30 },
+        adminUpdateProduct: { windowMs: 60000, maxRequests: 60 },
+        adminDeleteProduct: { windowMs: 60000, maxRequests: 15 },
+        adminIncreaseProductStock: { windowMs: 60000, maxRequests: 90 },
+        adminDecreaseProductStock: { windowMs: 60000, maxRequests: 90 },
+        adminUpdateProductPrice: { windowMs: 60000, maxRequests: 60 },
 
         // Category mutations
-        adminCreateCategory: { windowMs: 60000, maxRequests: 10 },
-        adminUpdateCategory: { windowMs: 60000, maxRequests: 20 },
-        adminDeleteCategory: { windowMs: 60000, maxRequests: 5 },
+        adminCreateCategory: { windowMs: 60000, maxRequests: 30 },
+        adminUpdateCategory: { windowMs: 60000, maxRequests: 60 },
+        adminDeleteCategory: { windowMs: 60000, maxRequests: 15 },
 
         // User mutations
-        adminCreateUser: { windowMs: 60000, maxRequests: 10 },
-        adminUpdateUser: { windowMs: 60000, maxRequests: 20 },
-        adminDeleteUser: { windowMs: 60000, maxRequests: 5 },
+        adminCreateUser: { windowMs: 60000, maxRequests: 30 },
+        adminUpdateUser: { windowMs: 60000, maxRequests: 60 },
+        adminDeleteUser: { windowMs: 60000, maxRequests: 15 },
 
         // Order mutations
-        adminCreateOrder: { windowMs: 60000, maxRequests: 10 },
-        adminUpdateOrder: { windowMs: 60000, maxRequests: 20 },
-        adminUpdateOrderStatus: { windowMs: 60000, maxRequests: 30 },
-        adminDeleteOrder: { windowMs: 60000, maxRequests: 5 },
+        adminCreateOrder: { windowMs: 60000, maxRequests: 30 },
+        adminUpdateOrder: { windowMs: 60000, maxRequests: 60 },
+        adminUpdateOrderStatus: { windowMs: 60000, maxRequests: 90 },
+        adminDeleteOrder: { windowMs: 60000, maxRequests: 15 },
 
         // OrderItem mutations
-        adminCreateOrderItem: { windowMs: 60000, maxRequests: 20 },
-        adminUpdateOrderItem: { windowMs: 60000, maxRequests: 30 },
-        adminUpdateOrderItemQuantity: { windowMs: 60000, maxRequests: 30 },
-        adminUpdateOrderItemPrice: { windowMs: 60000, maxRequests: 20 },
-        adminDeleteOrderItem: { windowMs: 60000, maxRequests: 10 },
+        adminCreateOrderItem: { windowMs: 60000, maxRequests: 60 },
+        adminUpdateOrderItem: { windowMs: 60000, maxRequests: 90 },
+        adminUpdateOrderItemQuantity: { windowMs: 60000, maxRequests: 90 },
+        adminUpdateOrderItemPrice: { windowMs: 60000, maxRequests: 60 },
+        adminDeleteOrderItem: { windowMs: 60000, maxRequests: 30 },
 
         // Wallet mutations
-        adminCreateWallet: { windowMs: 60000, maxRequests: 10 },
-        adminDeleteWallet: { windowMs: 60000, maxRequests: 5 },
-        adminIncreaseWalletBalance: { windowMs: 60000, maxRequests: 20 },
-        adminDecreaseWalletBalance: { windowMs: 60000, maxRequests: 20 },
-        adminTransferBetweenWallets: { windowMs: 60000, maxRequests: 10 },
+        adminCreateWallet: { windowMs: 60000, maxRequests: 30 },
+        adminDeleteWallet: { windowMs: 60000, maxRequests: 15 },
+        adminIncreaseWalletBalance: { windowMs: 60000, maxRequests: 60 },
+        adminDecreaseWalletBalance: { windowMs: 60000, maxRequests: 60 },
+        adminTransferBetweenWallets: { windowMs: 60000, maxRequests: 30 },
 
         // Cart mutations
-        adminDeleteCart: { windowMs: 60000, maxRequests: 10 },
+        adminDeleteCart: { windowMs: 60000, maxRequests: 30 },
       },
       ...config,
     };
@@ -195,9 +195,13 @@ export class GraphQLRateLimitPlugin implements ApolloServerPlugin {
       if (!limit) continue;
 
       // Always use IP-based rate limiting for GraphQL operations
-      const key = `graphql:v1:${operation}:${ip}`;
+      const identifier = `${operation}:${ip}`;
+      const customConfig = { ...limit, keyPrefix: "graphql" };
 
-      const result = await this.rateLimitService.checkCustomLimit(key, limit);
+      const result = await this.rateLimitService.checkCustomLimit(
+        identifier,
+        customConfig
+      );
 
       if (!result.allowed) {
         throw new RateLimitError(

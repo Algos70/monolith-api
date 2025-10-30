@@ -19,7 +19,7 @@ const getCurrentUserId = (req: Request): string => {
 // GET /wallets - Get all wallets for the authenticated user
 router.get(
   "/",
-  rateLimitMiddleware.createIPRateLimit({ maxRequests: 100, message: "Too many wallet requests" }),
+  rateLimitMiddleware.createIPRateLimit({ maxRequests: 300, message: "Too many wallet requests" }),
   requireWalletReadPermission,
   async (req: Request, res: Response) => {
     try {
@@ -40,7 +40,7 @@ router.get(
 // POST /wallets - Create a new wallet for the authenticated user
 router.post(
   "/",
-  rateLimitMiddleware.createIPRateLimit({ maxRequests: 5, message: "Too many wallet creation requests" }),
+  rateLimitMiddleware.createIPRateLimit({ maxRequests: 15, message: "Too many wallet creation requests" }),
   requireWalletWritePermission,
   async (req: Request, res: Response) => {
     try {
@@ -84,7 +84,7 @@ router.post(
 // POST /wallets/:id/increase - Increase balance of user's own wallet
 router.post(
   "/:id/increase",
-  rateLimitMiddleware.createIPRateLimit({ maxRequests: 20, message: "Too many balance increase requests" }),
+  rateLimitMiddleware.createIPRateLimit({ maxRequests: 60, message: "Too many balance increase requests" }),
   requireWalletWritePermission,
   async (req: Request, res: Response) => {
     try {
@@ -134,7 +134,7 @@ router.post(
 // DELETE /wallets/:id - Delete user's own wallet
 router.delete(
   "/:id",
-  rateLimitMiddleware.createIPRateLimit({ maxRequests: 5, message: "Too many wallet deletion requests" }),
+  rateLimitMiddleware.createIPRateLimit({ maxRequests: 15, message: "Too many wallet deletion requests" }),
   requireWalletWritePermission,
   async (req: Request, res: Response) => {
     try {
@@ -169,7 +169,7 @@ router.delete(
 // POST /wallets/transfer - Transfer money from user's wallet to another wallet
 router.post(
   "/transfer",
-  rateLimitMiddleware.createIPRateLimit({ maxRequests: 10, message: "Too many transfer requests" }),
+  rateLimitMiddleware.createIPRateLimit({ maxRequests: 30, message: "Too many transfer requests" }),
   requireWalletWritePermission,
   async (req: Request, res: Response) => {
     try {
@@ -223,7 +223,7 @@ router.post(
 // GET /wallets/currency/:currency - Get user's wallet by currency
 router.get(
   "/currency/:currency",
-  rateLimitMiddleware.createIPRateLimit({ maxRequests: 150, message: "Too many wallet by currency requests" }),
+  rateLimitMiddleware.createIPRateLimit({ maxRequests: 450, message: "Too many wallet by currency requests" }),
   requireWalletReadPermission,
   async (req: Request, res: Response) => {
     try {
@@ -253,7 +253,7 @@ router.get(
 // GET /wallets/currency/:currency/balance - Get balance for user's wallet by currency
 router.get(
   "/currency/:currency/balance",
-  rateLimitMiddleware.createIPRateLimit({ maxRequests: 100, message: "Too many balance check requests" }),
+  rateLimitMiddleware.createIPRateLimit({ maxRequests: 300, message: "Too many balance check requests" }),
   requireWalletReadPermission,
   async (req: Request, res: Response) => {
     try {
