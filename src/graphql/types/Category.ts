@@ -24,10 +24,23 @@ export const categoryTypeDefs = `
     pagination: Pagination!
   }
 
+  type CategoryProductsResult {
+    category: Category!
+    products: [Product!]!
+    pagination: Pagination!
+  }
+
   extend type Query {
+    # Admin queries
     adminCategories(page: Int = 1, limit: Int = 10, search: String): CategoryConnection!
     adminCategory(id: ID!): Category
     adminCategoryBySlug(slug: String!): Category
+    
+    # Public/User queries
+    categories(page: Int = 1, limit: Int = 10, search: String): CategoryConnection!
+    category(id: ID!): Category
+    categoryBySlug(slug: String!): Category
+    categoryProducts(slug: String!, page: Int = 1, limit: Int = 10, inStockOnly: Boolean = true): CategoryProductsResult!
   }
 
   extend type Mutation {

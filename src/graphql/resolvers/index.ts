@@ -6,6 +6,7 @@ import { adminOrderResolvers } from './adminOrderResolvers';
 import { adminOrderItemResolvers } from './adminOrderItemResolvers';
 import { adminCartResolvers } from './adminCartResolvers';
 import { productResolvers } from './productResolvers';
+import { categoryResolvers } from './categoryResolvers';
 
 export const resolvers = {
   Query: {
@@ -16,7 +17,8 @@ export const resolvers = {
     ...adminOrderResolvers.Query,
     ...adminOrderItemResolvers.Query,
     ...adminCartResolvers.Query,
-    ...productResolvers.Query
+    ...productResolvers.Query,
+    ...categoryResolvers.Query
   },
   Mutation: {
     ...adminCategoryResolvers.Mutation,
