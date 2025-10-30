@@ -1,6 +1,7 @@
 import { Product } from "../entities/Product";
 import { ProductRepository } from "../repositories/ProductRepository";
 import { CategoryRepository } from "../repositories/CategoryRepository";
+import { Cache, InvalidateCache } from "../cache/CacheDecorator";
 
 export interface CreateProductData {
   name: string;
@@ -58,11 +59,19 @@ export class ProductService {
   }
 
   // Slug ile ürün bul
+  @Cache({ 
+    ttl: 180, // 3 minutes
+    keyGenerator: (slug: string) => `product:v1:${slug}`
+  })
   async findBySlug(slug: string): Promise<Product | null> {
     return await this.productRepository.findBySlug(slug);
   }
 
   // Kategori ID'sine göre ürünleri bul
+  @Cache({ 
+    ttl: 120, // 2 minutes
+    keyGenerator: (categoryId: string) => `products:v1:category:${categoryId}`
+  })
   async findByCategoryId(categoryId: string): Promise<Product[]> {
     return await this.productRepository.findByCategoryId(categoryId);
   }
@@ -132,6 +141,12 @@ export class ProductService {
   }
 
   // Yeni ürün oluştur
+  @InvalidateCache({ 
+    patterns: [
+      'products:v1:*',
+      'product:v1:*'
+    ]
+  })
   async createProduct(productData: CreateProductData): Promise<Product> {
     // Validate input data
     this.validateProductData(productData);
@@ -170,6 +185,12 @@ export class ProductService {
   }
 
   // Ürün bilgilerini güncelle
+  @InvalidateCache({ 
+    patterns: [
+      'products:v1:*',
+      'product:v1:*'
+    ]
+  })
   async updateProduct(
     id: string,
     productData: UpdateProductData
@@ -240,6 +261,12 @@ export class ProductService {
   }
 
   // Ürünü sil
+  @InvalidateCache({ 
+    patterns: [
+      'products:v1:*',
+      'product:v1:*'
+    ]
+  })
   async deleteProduct(id: string): Promise<void> {
     const product = await this.findById(id);
     if (!product) {
@@ -250,18 +277,36 @@ export class ProductService {
   }
 
   // Stok azalt
+  @InvalidateCache({ 
+    patterns: [
+      'products:v1:*',
+      'product:v1:*'
+    ]
+  })
   async decreaseStock(productId: string, qty: number): Promise<Product | null> {
     this.validateStockQuantity(qty);
     return await this.productRepository.decreaseStock(productId, qty);
   }
 
   // Stok artır
+  @InvalidateCache({ 
+    patterns: [
+      'products:v1:*',
+      'product:v1:*'
+    ]
+  })
   async increaseStock(productId: string, qty: number): Promise<Product | null> {
     this.validateStockQuantity(qty);
     return await this.productRepository.increaseStock(productId, qty);
   }
 
   // Fiyat güncelle
+  @InvalidateCache({ 
+    patterns: [
+      'products:v1:*',
+      'product:v1:*'
+    ]
+  })
   async updatePrice(productId: string, newPriceMinor: number): Promise<Product | null> {
     if (newPriceMinor === undefined || typeof newPriceMinor !== "number" || newPriceMinor < 0) {
       const error = new Error("priceMinor must be a non-negative number") as ProductValidationError;
@@ -286,6 +331,18 @@ export class ProductService {
   }
 
   // Admin panel için ürün listesi (pagination ve search ile)
+  @Cache({ 
+    ttl: 120, // 2 minutes
+    keyGenerator: (options: ProductListOptions = {}) => {
+      const { page = 1, limit = 10, search = '', categoryId = '', inStockOnly = false } = options;
+      // Boş değerleri kaldır, sadece var olanları ekle
+      const parts = [`products:v1:list:${page}:${limit}`];
+      if (search) parts.push(`search:${search}`);
+      if (categoryId) parts.push(`cat:${categoryId}`);
+      if (inStockOnly) parts.push('instock');
+      return parts.join(':');
+    }
+  })
   async getProductsForAdmin(
     options: ProductListOptions = {}
   ): Promise<ProductListResult> {
@@ -330,6 +387,10 @@ export class ProductService {
   }
 
   // Admin panel için ürün detayı getirme
+  @Cache({ 
+    ttl: 180, // 3 minutes
+    keyGenerator: (id: string) => `product:v1:admin:${id}`
+  })
   async getProductForAdmin(id: string): Promise<Product> {
     const product = await this.findById(id);
     if (!product) {

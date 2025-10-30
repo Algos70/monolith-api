@@ -1,4 +1,4 @@
-import { CacheService } from "../services/index";
+import { CacheService } from "../services/CacheService";
 
 export interface CacheDecoratorOptions {
   ttl?: number;
@@ -26,17 +26,8 @@ export function Cache(options: CacheDecoratorOptions = {}) {
       
       if (options.keyGenerator) {
         cacheKey = options.keyGenerator(...args);
-        // Add version if not already included in custom key
-        if (!cacheKey.includes(':v')) {
-          const parts = cacheKey.split(':');
-          if (parts.length === 1) {
-            // Single part key like "products" -> "products:v1"
-            cacheKey = `${cacheKey}:${version}`;
-          } else {
-            // Multi-part key like "product:slug" -> "product:v1:slug"
-            cacheKey = `${parts[0]}:${version}:${parts.slice(1).join(':')}`;
-          }
-        }
+        // Don't modify the key if it already includes version (v1, v2, etc.)
+        // Custom keyGenerators should handle their own versioning
       } else {
         const argsKey = args.length > 0 ? `:${args.join(":")}` : "";
         cacheKey = `${target.constructor.name.toLowerCase()}:${version}:${propertyName}${argsKey}`;
