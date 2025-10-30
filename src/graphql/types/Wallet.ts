@@ -26,6 +26,17 @@ export const walletTypeDefs = `
     amountMinor: Int!
   }
 
+  input CreateUserWalletInput {
+    currency: String!
+    initialBalance: Int = 0
+  }
+
+  input UserTransferInput {
+    toWalletId: ID!
+    currency: String!
+    amountMinor: Int!
+  }
+
   type WalletConnection {
     wallets: [Wallet!]!
     pagination: Pagination!
@@ -66,6 +77,16 @@ export const walletTypeDefs = `
     
     # Get balance for specific user and currency
     adminWalletBalance(userId: ID!, currency: String!): BalanceResponse!
+
+    # User wallet operations
+    # Get all wallets for the authenticated user
+    userWallets: [Wallet!]!
+    
+    # Get user's wallet by currency
+    userWalletByCurrency(currency: String!): Wallet
+    
+    # Get balance for user's wallet by currency
+    userWalletBalance(currency: String!): BalanceResponse!
   }
 
   extend type Mutation {
@@ -83,5 +104,18 @@ export const walletTypeDefs = `
     
     # Transfer between wallets
     adminTransferBetweenWallets(input: TransferInput!): TransferResponse!
+
+    # User wallet operations
+    # Create a new wallet for the authenticated user
+    createUserWallet(input: CreateUserWalletInput!): Wallet!
+    
+    # Increase balance of user's own wallet
+    increaseUserWalletBalance(walletId: ID!, input: BalanceOperationInput!): Wallet!
+    
+    # Delete user's own wallet
+    deleteUserWallet(walletId: ID!): Boolean!
+    
+    # Transfer money from user's wallet to another wallet
+    transferFromUserWallet(input: UserTransferInput!): TransferResponse!
   }
 `;

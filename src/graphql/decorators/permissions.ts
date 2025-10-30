@@ -21,6 +21,8 @@ import {
   requireAdminPanelWritePermissionForOrderItems,
   requireAdminPanelReadPermissionForCarts,
   requireAdminPanelWritePermissionForCarts,
+  requireWalletRead,
+  requireWalletWrite,
   type GraphQLContext,
 } from "../utils/permissions";
 
@@ -360,6 +362,36 @@ export function RequireAdminPanelWritePermissionForCarts() {
     descriptor.value = async function (...args: any[]) {
       const [, , context] = args;
       requireAdminPanelWritePermissionForCarts(context as GraphQLContext);
+      return originalMethod.apply(this, args);
+    };
+    
+    return descriptor;
+  };
+}
+
+// Decorator for user wallet read permission (matching REST API)
+export function RequireWalletReadPermission() {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requireWalletRead(context as GraphQLContext);
+      return originalMethod.apply(this, args);
+    };
+    
+    return descriptor;
+  };
+}
+
+// Decorator for user wallet write permission (matching REST API)
+export function RequireWalletWritePermission() {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    
+    descriptor.value = async function (...args: any[]) {
+      const [, , context] = args;
+      requireWalletWrite(context as GraphQLContext);
       return originalMethod.apply(this, args);
     };
     

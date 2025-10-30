@@ -8,6 +8,7 @@ import { adminCartResolvers } from './adminCartResolvers';
 import { cartResolvers } from './cartResolvers';
 import { productResolvers } from './productResolvers';
 import { categoryResolvers } from './categoryResolvers';
+import { walletResolvers } from './walletResolvers';
 
 export const resolvers = {
   Query: {
@@ -20,7 +21,8 @@ export const resolvers = {
     ...adminCartResolvers.Query,
     ...cartResolvers.Query,
     ...productResolvers.Query,
-    ...categoryResolvers.Query
+    ...categoryResolvers.Query,
+    ...walletResolvers.Query
   },
   Mutation: {
     ...adminCategoryResolvers.Mutation,
@@ -29,6 +31,7 @@ export const resolvers = {
     ...adminOrderResolvers.Mutation,
     ...adminOrderItemResolvers.Mutation,
     ...adminCartResolvers.Mutation,
-    ...cartResolvers.Mutation
+    ...cartResolvers.Mutation,
+    ...walletResolvers.Mutation
   }
 };
