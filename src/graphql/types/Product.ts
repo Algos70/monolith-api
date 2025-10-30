@@ -9,7 +9,7 @@ export const productTypeDefs = `
     stockQty: Int!
     createdAt: String!
     updatedAt: String!
-    category: Category!
+    category: Category
   }
 
   input CreateProductInput {
