@@ -5,6 +5,7 @@ import { adminWalletResolvers } from './adminWalletResolvers';
 import { adminOrderResolvers } from './adminOrderResolvers';
 import { adminOrderItemResolvers } from './adminOrderItemResolvers';
 import { adminCartResolvers } from './adminCartResolvers';
+import { cartResolvers } from './cartResolvers';
 import { productResolvers } from './productResolvers';
 import { categoryResolvers } from './categoryResolvers';
 
@@ -17,6 +18,7 @@ export const resolvers = {
     ...adminOrderResolvers.Query,
     ...adminOrderItemResolvers.Query,
     ...adminCartResolvers.Query,
+    ...cartResolvers.Query,
     ...productResolvers.Query,
     ...categoryResolvers.Query
   },
@@ -26,6 +28,7 @@ export const resolvers = {
     ...adminWalletResolvers.Mutation,
     ...adminOrderResolvers.Mutation,
     ...adminOrderItemResolvers.Mutation,
-    ...adminCartResolvers.Mutation
+    ...adminCartResolvers.Mutation,
+    ...cartResolvers.Mutation
   }
 };

@@ -37,6 +37,11 @@ const cartTypes = `
     qty: Int!
   }
 
+  input AddItemToCartInput {
+    productId: ID!
+    quantity: Int!
+  }
+
   input UpdateCartItemInput {
     qty: Int!
   }
@@ -44,6 +49,9 @@ const cartTypes = `
 
 const cartQueries = `
   extend type Query {
+    # User Cart Queries
+    userCart: Cart!
+
     # Admin Cart Queries
     adminCarts(page: Int = 1, limit: Int = 10, search: String): CartListResult!
     adminCart(id: ID!): Cart!
@@ -55,6 +63,11 @@ const cartQueries = `
 
 const cartMutations = `
   extend type Mutation {
+    # User Cart Mutations
+    addItemToCart(input: AddItemToCartInput!): Cart!
+    removeItemFromCart(productId: ID!): Cart!
+    clearCart: Cart!
+
     # Admin Cart Mutations
     adminDeleteCart(id: ID!): Boolean!
   }
