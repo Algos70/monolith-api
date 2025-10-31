@@ -100,14 +100,13 @@ export class AuthService {
 
   // Get user information using access token
   async getUserInfo(accessToken: string): Promise<UserInfo> {
-    const response = await axios.get(
-      `${this.config.keycloakBaseUrl}/realms/${this.config.keycloakRealm}/protocol/openid-connect/userinfo`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    const userInfoUrl = `${this.config.keycloakBaseUrl}/realms/${this.config.keycloakRealm}/protocol/openid-connect/userinfo`;
+
+    const response = await axios.get(userInfoUrl, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
     return response.data;
   }
@@ -141,17 +140,23 @@ export class AuthService {
   }
 
   // Sync user with database and create session
-  async syncUserAndCreateSession(userInfo: UserInfo, tokens: TokenData): Promise<any> {
+  async syncUserAndCreateSession(
+    userInfo: UserInfo,
+    tokens: TokenData
+  ): Promise<any> {
     // Kullanıcıyı veritabanında senkronize et
     const dbUser = await this.userService.syncKeycloakUser(userInfo);
-    
-    return {
+
+    const sessionData = {
       ...userInfo,
       dbUserId: dbUser.id, // Veritabanındaki kullanıcı ID'si
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       id_token: tokens.id_token,
     };
+
+
+    return sessionData;
   }
 
   // Create user session data (legacy method)
@@ -201,19 +206,24 @@ export class AuthService {
   }
 
   // Login with username/password (Resource Owner Password Credentials flow)
-  async loginWithCredentials(credentials: {
-    username: string;
-    password: string;
-  }, clientConfig: {
-    clientId: string;
-    clientSecret: string;
-  }): Promise<{ success: boolean; message: string; user: any }> {
+  async loginWithCredentials(
+    credentials: {
+      username: string;
+      password: string;
+    },
+    clientConfig: {
+      clientId: string;
+      clientSecret: string;
+    }
+  ): Promise<{ success: boolean; message: string; user: any }> {
     try {
       const { username, password } = credentials;
 
+      const tokenUrl = `${this.config.keycloakBaseUrl}/realms/${this.config.keycloakRealm}/protocol/openid-connect/token`;
+
       // Authenticate with Keycloak using Resource Owner Password Credentials flow
       const tokenResponse = await axios.post(
-        `${this.config.keycloakBaseUrl}/realms/${this.config.keycloakRealm}/protocol/openid-connect/token`,
+        tokenUrl,
         new URLSearchParams({
           grant_type: "password",
           client_id: clientConfig.clientId,
@@ -248,27 +258,37 @@ export class AuthService {
         message: "Login successful",
         user: userSession, // Return full session for internal use, sanitization happens in resolvers
       };
-
     } catch (error: any) {
-      console.error("Login error:", error.response?.data || error.message);
+      console.error(
+        "❌ AuthService login error:",
+        error.response?.data || error.message
+      );
 
       if (error.response?.status === 401) {
+        console.error("🚫 Authentication failed - Invalid credentials");
         throw new Error("Invalid username or password");
       }
 
       if (error.response?.status === 403) {
-        throw new Error("Access forbidden. Check Keycloak client configuration.");
+        console.error("🚫 Access forbidden - Check client configuration");
+        throw new Error(
+          "Access forbidden. Check Keycloak client configuration."
+        );
       }
 
+      console.error("💥 Unexpected login error:", error);
       throw new Error("Login failed");
     }
   }
 
   // Logout user from Keycloak and clear session
-  async logoutUser(refreshToken?: string, clientConfig?: {
-    clientId: string;
-    clientSecret: string;
-  }): Promise<{ success: boolean; message: string }> {
+  async logoutUser(
+    refreshToken?: string,
+    clientConfig?: {
+      clientId: string;
+      clientSecret: string;
+    }
+  ): Promise<{ success: boolean; message: string }> {
     try {
       if (refreshToken && clientConfig) {
         // Logout from Keycloak directly
@@ -303,7 +323,9 @@ export class AuthService {
   }
 
   // Refresh user tokens
-  async refreshUserToken(refreshToken: string): Promise<{ success: boolean; message: string; user?: any }> {
+  async refreshUserToken(
+    refreshToken: string
+  ): Promise<{ success: boolean; message: string; user?: any }> {
     try {
       // Refresh token using confidential client
       const tokenData = await this.refreshToken(refreshToken);
@@ -324,16 +346,19 @@ export class AuthService {
   }
 
   // Register new user in Keycloak and sync to local database
-  async registerUser(userData: {
-    username: string;
-    email: string;
-    password: string;
-    firstName?: string;
-    lastName?: string;
-  }, adminConfig: {
-    clientId: string;
-    clientSecret: string;
-  }): Promise<{ success: boolean; message: string; userId?: string }> {
+  async registerUser(
+    userData: {
+      username: string;
+      email: string;
+      password: string;
+      firstName?: string;
+      lastName?: string;
+    },
+    adminConfig: {
+      clientId: string;
+      clientSecret: string;
+    }
+  ): Promise<{ success: boolean; message: string; userId?: string }> {
     try {
       const { username, email, password, firstName, lastName } = userData;
 
@@ -380,23 +405,25 @@ export class AuthService {
 
       // Get the created user's ID from Keycloak
       let keycloakUserId: string | null = null;
-      
+
       if (createUserResponse.headers.location) {
-        const locationParts = createUserResponse.headers.location.split('/');
+        const locationParts = createUserResponse.headers.location.split("/");
         keycloakUserId = locationParts[locationParts.length - 1];
       }
 
       // If we couldn't get the ID from Location header, fetch the user by email
       if (!keycloakUserId) {
         const getUserResponse = await axios.get(
-          `${this.config.keycloakBaseUrl}/admin/realms/${this.config.keycloakRealm}/users?email=${encodeURIComponent(email)}`,
+          `${this.config.keycloakBaseUrl}/admin/realms/${
+            this.config.keycloakRealm
+          }/users?email=${encodeURIComponent(email)}`,
           {
             headers: {
               Authorization: `Bearer ${adminToken}`,
             },
           }
         );
-        
+
         if (getUserResponse.data && getUserResponse.data.length > 0) {
           keycloakUserId = getUserResponse.data[0].id;
         }
@@ -404,8 +431,11 @@ export class AuthService {
 
       // Create user in local database
       if (keycloakUserId) {
-        const fullName = firstName && lastName ? `${firstName} ${lastName}` : (firstName || lastName || username);
-        
+        const fullName =
+          firstName && lastName
+            ? `${firstName} ${lastName}`
+            : firstName || lastName || username;
+
         await this.userService.createUser({
           id: keycloakUserId, // Use Keycloak UUID as primary key
           email,
@@ -418,9 +448,11 @@ export class AuthService {
         message: "User registered successfully",
         userId: keycloakUserId || undefined,
       };
-
     } catch (error: any) {
-      console.error("Registration error:", error.response?.data || error.message);
+      console.error(
+        "Registration error:",
+        error.response?.data || error.message
+      );
 
       // Handle specific Keycloak errors
       if (error.response?.status === 409) {
@@ -428,15 +460,21 @@ export class AuthService {
       }
 
       if (error.response?.status === 401) {
-        throw new Error("Admin authentication failed. Check client configuration.");
+        throw new Error(
+          "Admin authentication failed. Check client configuration."
+        );
       }
 
       if (error.response?.status === 403) {
-        throw new Error("Client lacks required permissions. Assign manage-users role to service account.");
+        throw new Error(
+          "Client lacks required permissions. Assign manage-users role to service account."
+        );
       }
 
-      if (error.response?.data?.error === 'unauthorized_client') {
-        throw new Error("Client configuration error: Enable service accounts and assign manage-users role.");
+      if (error.response?.data?.error === "unauthorized_client") {
+        throw new Error(
+          "Client configuration error: Enable service accounts and assign manage-users role."
+        );
       }
 
       if (error.response?.data?.errorMessage) {

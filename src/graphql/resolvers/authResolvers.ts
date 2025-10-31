@@ -42,7 +42,7 @@ export const authResolvers = {
         }
 
         const config = getKeycloakConfig();
-
+        
         if (!config.clientSecret) {
           throw new Error("Server configuration error: Missing client secret");
         }
@@ -72,7 +72,6 @@ export const authResolvers = {
           user: sanitizedUser,
         };
       } catch (error: any) {
-        console.error("GraphQL Login error:", error.message);
 
         if (error.message.includes("Invalid username or password")) {
           throw new AuthenticationError(error.message);
