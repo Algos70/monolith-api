@@ -2,7 +2,9 @@ name: Build and Release Docker Image
 
 on:
   push:
-    branches: [ dev ]
+    branches:
+      - dev
+      - main
 
 
 permissions:
