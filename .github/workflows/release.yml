@@ -31,6 +31,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build Docker image locally (so plugin can find it)
+        run: docker build -t ${{ env.OWNER_LC }}/monolith-api:latest .
+  
       - name: Login to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ env.OWNER_LC }} --password-stdin
       
