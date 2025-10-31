@@ -1,7 +1,5 @@
-import axios from "axios";
-import qs from "qs";
 import { SessionService } from "../../services/SessionService";
-import { refreshTokenWithClient } from "../../auth/confidentialClient";
+import { AuthService } from "../../services/AuthService";
 import { GraphQLContext } from "../utils/permissions";
 import { AuthenticationError, UserInputError } from "../utils/permissions";
 
@@ -11,14 +9,12 @@ const getKeycloakConfig = () => ({
   realm: process.env.KEYCLOAK_REALM || "shop",
   clientId: process.env.KEYCLOAK_CLIENT_ID || "monolith-api",
   clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
-  adminSecret: process.env.KEYCLOAK_ADMIN_SECRET,
 });
 
 export const authResolvers = {
   Query: {
     // Get current authenticated user
     me: (_: any, __: any, context: GraphQLContext) => {
-
       if (!SessionService.isAuthenticated(context.req)) {
         console.log("Not authenticated - throwing error");
         throw new AuthenticationError("Not authenticated");
@@ -51,88 +47,38 @@ export const authResolvers = {
           throw new Error("Server configuration error: Missing client secret");
         }
 
-        // Prepare request data
-        const requestData = {
-          grant_type: "password",
-          client_id: config.clientId,
-          client_secret: config.clientSecret,
-          username,
-          password,
-          scope: "openid profile email",
-        };
-
-        const requestUrl = `${config.baseUrl}/realms/${config.realm}/protocol/openid-connect/token`;
-        const encodedData = qs.stringify(requestData);
-
-        // Authenticate with Keycloak
-        const response = await axios({
-          method: "POST",
-          url: requestUrl,
-          data: encodedData,
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Content-Length": Buffer.byteLength(encodedData),
-          },
-          timeout: 10000,
-          maxRedirects: 0,
-          validateStatus: (status) => status < 500,
+        // Use AuthService for login
+        const authService = new AuthService({
+          keycloakBaseUrl: config.baseUrl,
+          keycloakRealm: config.realm,
+          publicClientId: config.clientId,
+          frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
         });
 
-        if (response.status !== 200) {
-          throw new AuthenticationError("Invalid username or password");
-        }
-
-        const tokens = response.data;
-
-        // Get user info using the access token
-        const userInfoResponse = await axios.get(
-          `${config.baseUrl}/realms/${config.realm}/protocol/openid-connect/userinfo`,
-          {
-            headers: { Authorization: `Bearer ${tokens.access_token}` },
-          }
+        const result = await authService.loginWithCredentials(
+          { username, password },
+          { clientId: config.clientId, clientSecret: config.clientSecret }
         );
 
-        const userInfo = userInfoResponse.data;
-
-        // Create user session (userInfo already contains permissions from Keycloak)
-        const userSession = {
-          ...userInfo,
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token,
-          id_token: tokens.id_token,
-        };
-        SessionService.storeUser(context.req, userSession);
-
-        // Save session to ensure it's persisted
+        // Store user session
+        SessionService.storeUser(context.req, result.user);
         await SessionService.saveSession(context.req);
 
-        // Return success response (without sensitive tokens)
+        // Return sanitized result
         const { access_token, refresh_token, id_token, ...sanitizedUser } =
-          userSession;
-
-
+          result.user;
         return {
-          success: true,
-          message: "Login successful",
+          ...result,
           user: sanitizedUser,
         };
       } catch (error: any) {
-        console.error(
-          "GraphQL Login error:",
-          error.response?.data || error.message
-        );
+        console.error("GraphQL Login error:", error.message);
 
-        if (error.response?.status === 401) {
-          throw new AuthenticationError("Invalid username or password");
+        if (error.message.includes("Invalid username or password")) {
+          throw new AuthenticationError(error.message);
         }
 
-        if (error.response?.status === 403) {
-          throw new AuthenticationError(
-            "Access forbidden. Check Keycloak client configuration."
-          );
-        }
-
-        throw new Error("Login failed");
+        throw new Error(error.message || "Login failed");
       }
     },
 
@@ -163,67 +109,33 @@ export const authResolvers = {
 
         const config = getKeycloakConfig();
 
-        if (!config.adminSecret) {
-          throw new Error("Server configuration error: Missing admin secret");
+        if (!config.clientSecret) {
+          throw new Error("Server configuration error: Missing client secret");
         }
 
-        // Get admin token for user creation
-        const adminToken = await axios.post(
-          `${config.baseUrl}/realms/master/protocol/openid-connect/token`,
-          qs.stringify({
-            grant_type: "client_credentials",
-            client_id: "admin-cli",
-            client_secret: config.adminSecret,
-          }),
-          {
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          }
+        // Use AuthService for registration
+        const authService = new AuthService({
+          keycloakBaseUrl: config.baseUrl,
+          keycloakRealm: config.realm,
+          publicClientId: config.clientId,
+          frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
+        });
+
+        const result = await authService.registerUser(
+          { username, email, password, firstName, lastName },
+          { clientId: config.clientId, clientSecret: config.clientSecret }
         );
 
-        // Create user in Keycloak
-        await axios.post(
-          `${config.baseUrl}/admin/realms/${config.realm}/users`,
-          {
-            username,
-            email,
-            firstName: firstName || "",
-            lastName: lastName || "",
-            enabled: true,
-            credentials: [
-              {
-                type: "password",
-                value: password,
-                temporary: false,
-              },
-            ],
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${adminToken.data.access_token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        return {
-          success: true,
-          message: "User registered successfully",
-        };
+        return result;
       } catch (error: any) {
-        console.error(
-          "GraphQL Registration error:",
-          error.response?.data || error.message
-        );
+        console.error("GraphQL Registration error:", error.message);
 
-        if (error.response?.status === 409) {
-          throw new UserInputError("User already exists");
+        // Handle specific errors
+        if (error.message.includes("User already exists")) {
+          throw new UserInputError(error.message);
         }
 
-        if (error.response?.data?.errorMessage) {
-          throw new UserInputError(error.response.data.errorMessage);
-        }
-
-        throw new Error("Registration failed");
+        throw new Error(error.message || "Registration failed");
       }
     },
 
@@ -231,39 +143,30 @@ export const authResolvers = {
     logout: async (_: any, __: any, context: GraphQLContext) => {
       try {
         const user = SessionService.getUser(context.req);
+        const config = getKeycloakConfig();
 
-        if (user?.refresh_token) {
-          // Logout from Keycloak directly
-          const config = getKeycloakConfig();
-          const logoutUrl = `${config.baseUrl}/realms/${config.realm}/protocol/openid-connect/logout`;
+        // Use AuthService for logout
+        const authService = new AuthService({
+          keycloakBaseUrl: config.baseUrl,
+          keycloakRealm: config.realm,
+          publicClientId: config.clientId,
+          frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
+        });
 
-          if (config.clientSecret) {
-            await axios.post(
-              logoutUrl,
-              qs.stringify({
-                client_id: config.clientId,
-                client_secret: config.clientSecret,
-                refresh_token: user.refresh_token,
-              }),
-              {
-                headers: {
-                  "Content-Type": "application/x-www-form-urlencoded",
-                },
-              }
-            );
-          }
-        }
+        const result = await authService.logoutUser(
+          user?.refresh_token,
+          config.clientSecret
+            ? { clientId: config.clientId, clientSecret: config.clientSecret }
+            : undefined
+        );
 
         // Clear session
         await SessionService.destroySession(context.req, context.res);
 
-        return {
-          success: true,
-          message: "Logged out successfully",
-        };
+        return result;
       } catch (error) {
         console.error("GraphQL Logout error:", error);
-        // Even if Keycloak logout fails, clear the session
+        // Even if logout fails, clear the session
         await SessionService.destroySession(context.req, context.res);
         return {
           success: true,
@@ -281,15 +184,21 @@ export const authResolvers = {
           throw new AuthenticationError("No refresh token available");
         }
 
-        // Refresh token using confidential client
-        const tokenData = await refreshTokenWithClient(user.refresh_token);
+        // Use AuthService for token refresh
+        const authService = new AuthService({
+          keycloakBaseUrl:
+            process.env.KEYCLOAK_BASE_URL || "http://localhost:8080",
+          keycloakRealm: process.env.KEYCLOAK_REALM || "shop",
+          publicClientId: process.env.KEYCLOAK_CLIENT_ID || "monolith-api",
+          frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
+        });
+
+        const result = await authService.refreshUserToken(user.refresh_token);
 
         // Update session with new tokens
         const updatedUser = {
           ...user,
-          access_token: tokenData.access_token,
-          refresh_token: tokenData.refresh_token || user.refresh_token,
-          id_token: tokenData.id_token,
+          ...result.user,
         };
         SessionService.storeUser(context.req, updatedUser);
 

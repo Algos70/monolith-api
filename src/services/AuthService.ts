@@ -199,4 +199,251 @@ export class AuthService {
     delete session.codeVerifier;
     delete session.state;
   }
+
+  // Login with username/password (Resource Owner Password Credentials flow)
+  async loginWithCredentials(credentials: {
+    username: string;
+    password: string;
+  }, clientConfig: {
+    clientId: string;
+    clientSecret: string;
+  }): Promise<{ success: boolean; message: string; user: any }> {
+    try {
+      const { username, password } = credentials;
+
+      // Authenticate with Keycloak using Resource Owner Password Credentials flow
+      const tokenResponse = await axios.post(
+        `${this.config.keycloakBaseUrl}/realms/${this.config.keycloakRealm}/protocol/openid-connect/token`,
+        new URLSearchParams({
+          grant_type: "password",
+          client_id: clientConfig.clientId,
+          client_secret: clientConfig.clientSecret,
+          username,
+          password,
+          scope: "openid profile email",
+        }),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          timeout: 10000,
+          validateStatus: (status) => status < 500,
+        }
+      );
+
+      if (tokenResponse.status !== 200) {
+        throw new Error("Invalid username or password");
+      }
+
+      const tokens = tokenResponse.data;
+
+      // Get user info using the access token
+      const userInfo = await this.getUserInfo(tokens.access_token);
+
+      // Sync user with local database and create session
+      const userSession = await this.syncUserAndCreateSession(userInfo, tokens);
+
+      return {
+        success: true,
+        message: "Login successful",
+        user: userSession, // Return full session for internal use, sanitization happens in resolvers
+      };
+
+    } catch (error: any) {
+      console.error("Login error:", error.response?.data || error.message);
+
+      if (error.response?.status === 401) {
+        throw new Error("Invalid username or password");
+      }
+
+      if (error.response?.status === 403) {
+        throw new Error("Access forbidden. Check Keycloak client configuration.");
+      }
+
+      throw new Error("Login failed");
+    }
+  }
+
+  // Logout user from Keycloak and clear session
+  async logoutUser(refreshToken?: string, clientConfig?: {
+    clientId: string;
+    clientSecret: string;
+  }): Promise<{ success: boolean; message: string }> {
+    try {
+      if (refreshToken && clientConfig) {
+        // Logout from Keycloak directly
+        await axios.post(
+          `${this.config.keycloakBaseUrl}/realms/${this.config.keycloakRealm}/protocol/openid-connect/logout`,
+          new URLSearchParams({
+            client_id: clientConfig.clientId,
+            client_secret: clientConfig.clientSecret,
+            refresh_token: refreshToken,
+          }),
+          {
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+          }
+        );
+      }
+
+      return {
+        success: true,
+        message: "Logged out successfully",
+      };
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if Keycloak logout fails, we still return success
+      // because the session will be cleared anyway
+      return {
+        success: true,
+        message: "Logged out successfully",
+      };
+    }
+  }
+
+  // Refresh user tokens
+  async refreshUserToken(refreshToken: string): Promise<{ success: boolean; message: string; user?: any }> {
+    try {
+      // Refresh token using confidential client
+      const tokenData = await this.refreshToken(refreshToken);
+
+      return {
+        success: true,
+        message: "Token refreshed successfully",
+        user: {
+          access_token: tokenData.access_token,
+          refresh_token: tokenData.refresh_token,
+          id_token: tokenData.id_token,
+        },
+      };
+    } catch (error) {
+      console.error("Token refresh error:", error);
+      throw new Error("Token refresh failed");
+    }
+  }
+
+  // Register new user in Keycloak and sync to local database
+  async registerUser(userData: {
+    username: string;
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+  }, adminConfig: {
+    clientId: string;
+    clientSecret: string;
+  }): Promise<{ success: boolean; message: string; userId?: string }> {
+    try {
+      const { username, email, password, firstName, lastName } = userData;
+
+      // Get admin token for user creation
+      const adminTokenResponse = await axios.post(
+        `${this.config.keycloakBaseUrl}/realms/${this.config.keycloakRealm}/protocol/openid-connect/token`,
+        new URLSearchParams({
+          grant_type: "client_credentials",
+          client_id: adminConfig.clientId,
+          client_secret: adminConfig.clientSecret,
+        }),
+        {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        }
+      );
+
+      const adminToken = adminTokenResponse.data.access_token;
+
+      // Create user in Keycloak
+      const createUserResponse = await axios.post(
+        `${this.config.keycloakBaseUrl}/admin/realms/${this.config.keycloakRealm}/users`,
+        {
+          username,
+          email,
+          firstName: firstName || "",
+          lastName: lastName || "",
+          enabled: true,
+          emailVerified: true,
+          credentials: [
+            {
+              type: "password",
+              value: password,
+              temporary: false,
+            },
+          ],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // Get the created user's ID from Keycloak
+      let keycloakUserId: string | null = null;
+      
+      if (createUserResponse.headers.location) {
+        const locationParts = createUserResponse.headers.location.split('/');
+        keycloakUserId = locationParts[locationParts.length - 1];
+      }
+
+      // If we couldn't get the ID from Location header, fetch the user by email
+      if (!keycloakUserId) {
+        const getUserResponse = await axios.get(
+          `${this.config.keycloakBaseUrl}/admin/realms/${this.config.keycloakRealm}/users?email=${encodeURIComponent(email)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${adminToken}`,
+            },
+          }
+        );
+        
+        if (getUserResponse.data && getUserResponse.data.length > 0) {
+          keycloakUserId = getUserResponse.data[0].id;
+        }
+      }
+
+      // Create user in local database
+      if (keycloakUserId) {
+        const fullName = firstName && lastName ? `${firstName} ${lastName}` : (firstName || lastName || username);
+        
+        await this.userService.createUser({
+          id: keycloakUserId, // Use Keycloak UUID as primary key
+          email,
+          name: fullName,
+        });
+      }
+
+      return {
+        success: true,
+        message: "User registered successfully",
+        userId: keycloakUserId || undefined,
+      };
+
+    } catch (error: any) {
+      console.error("Registration error:", error.response?.data || error.message);
+
+      // Handle specific Keycloak errors
+      if (error.response?.status === 409) {
+        throw new Error("User already exists");
+      }
+
+      if (error.response?.status === 401) {
+        throw new Error("Admin authentication failed. Check client configuration.");
+      }
+
+      if (error.response?.status === 403) {
+        throw new Error("Client lacks required permissions. Assign manage-users role to service account.");
+      }
+
+      if (error.response?.data?.error === 'unauthorized_client') {
+        throw new Error("Client configuration error: Enable service accounts and assign manage-users role.");
+      }
+
+      if (error.response?.data?.errorMessage) {
+        throw new Error(error.response.data.errorMessage);
+      }
+
+      throw new Error("Registration failed");
+    }
+  }
 }
