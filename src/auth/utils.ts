@@ -6,48 +6,67 @@ import type { SessionUser, Permission, PermissionChecker } from "./types";
 export function createPermissionChecker(user: SessionUser): PermissionChecker {
   return {
     hasPermission(permission: Permission): boolean {
-      return user.permissions.includes(permission);
+      return user.permissions?.includes(permission) ?? false;
     },
 
     hasAnyPermission(permissions: Permission[]): boolean {
-      return permissions.some(permission => user.permissions.includes(permission));
+      return permissions.some(
+        (permission) => user.permissions?.includes(permission) ?? false
+      );
     },
 
     hasAllPermissions(permissions: Permission[]): boolean {
-      return permissions.every(permission => user.permissions.includes(permission));
-    }
+      return permissions.every(
+        (permission) => user.permissions?.includes(permission) ?? false
+      );
+    },
   };
 }
 
 /**
  * Helper function to check if user has specific permission
  */
-export function hasPermission(user: SessionUser | undefined, permission: Permission): boolean {
-  if (!user || !user.permissions) return false;
+export function hasPermission(
+  user: SessionUser | undefined,
+  permission: Permission
+): boolean {
+  if (!user?.permissions) return false;
   return user.permissions.includes(permission);
 }
 
 /**
  * Helper function to check if user has any of the specified permissions
  */
-export function hasAnyPermission(user: SessionUser | undefined, permissions: Permission[]): boolean {
-  if (!user || !user.permissions) return false;
-  return permissions.some(permission => user.permissions.includes(permission));
+export function hasAnyPermission(
+  user: SessionUser | undefined,
+  permissions: Permission[]
+): boolean {
+  if (!user?.permissions) return false;
+  return permissions.some((permission) =>
+    user.permissions!.includes(permission)
+  );
 }
 
 /**
  * Helper function to check if user has all specified permissions
  */
-export function hasAllPermissions(user: SessionUser | undefined, permissions: Permission[]): boolean {
-  if (!user || !user.permissions) return false;
-  return permissions.every(permission => user.permissions.includes(permission));
+export function hasAllPermissions(
+  user: SessionUser | undefined,
+  permissions: Permission[]
+): boolean {
+  if (!user?.permissions) return false;
+  return permissions.every((permission) =>
+    user.permissions!.includes(permission)
+  );
 }
 
 /**
  * Helper function to check if user is admin
  */
 export function isAdmin(user: SessionUser | undefined): boolean {
-  return hasPermission(user, "admin_read") && hasPermission(user, "admin_write");
+  return (
+    hasPermission(user, "admin_read") && hasPermission(user, "admin_write")
+  );
 }
 
 /**
@@ -81,6 +100,6 @@ export function getUserRolePermissions(user: SessionUser): {
     canWriteOrders: hasPermission(user, "orders_write"),
     canReadCategories: hasPermission(user, "categories_read"),
     canWriteCategories: hasPermission(user, "categories_write"),
-    isAdmin: isAdmin(user)
+    isAdmin: isAdmin(user),
   };
 }
