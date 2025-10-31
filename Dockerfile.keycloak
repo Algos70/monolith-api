@@ -1,0 +1,8 @@
+# Frontenddeki e2e testleri çalıştırmak için gereklidir
+FROM quay.io/keycloak/keycloak:26.0
+
+# Realm export dosyasını image içine göm
+COPY shop-realm.json /opt/keycloak/data/import/shop-realm.json
+
+# Keycloak'ı dev modda başlatırken otomatik import et
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start-dev", "--import-realm"]
