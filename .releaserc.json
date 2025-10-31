@@ -1,8 +1,16 @@
 {
-  "branches": ["main"],
+  "branches": ["main", "dev"],
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
-    "@semantic-release/github"
+    "@semantic-release/github",
+    [
+      "@semantic-release/docker",
+      {
+        "name": "ghcr.io/algos70/monolith-api",
+        "registryUrl": "https://ghcr.io",
+        "publishChannel": "latest"
+      }
+    ]
   ]
 }
