@@ -28,11 +28,16 @@
     "typeorm": "^0.3.27"
   },
   "devDependencies": {
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@semantic-release/release-notes-generator": "^14.1.0",
     "@types/connect-redis": "^0.0.23",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.4",
     "@types/express-session": "^1.18.2",
     "@types/node": "^24.9.1",
+    "semantic-release": "^24.2.9",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   }
