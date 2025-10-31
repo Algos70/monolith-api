@@ -46,9 +46,9 @@ export class ProductRepository {
   }
 
   // Domain-specific stock management
-  async decreaseStock(productId: string, qty: number): Promise<Product | null> {
-    return await AppDataSource.transaction(async manager => {
-      const product = await manager.findOne(Product, {
+  async decreaseStock(productId: string, qty: number, manager?: any): Promise<Product | null> {
+    const executeOperation = async (entityManager: any) => {
+      const product = await entityManager.findOne(Product, {
         where: { id: productId },
         relations: ["category"]
       });
@@ -62,8 +62,14 @@ export class ProductRepository {
       }
 
       product.stockQty -= qty;
-      return await manager.save(product);
-    });
+      return await entityManager.save(product);
+    };
+
+    if (manager) {
+      return await executeOperation(manager);
+    } else {
+      return await AppDataSource.transaction(executeOperation);
+    }
   }
 
   async increaseStock(productId: string, qty: number): Promise<Product | null> {

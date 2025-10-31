@@ -168,22 +168,18 @@ export class OrderService {
   // Create order from user's cart with transaction
   async createOrderFromCart(data: CreateOrderFromCartData): Promise<Order> {
     const { userId, walletId } = data;
-    
-    const queryRunner = AppDataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
 
-    try {
-      // Get user's cart
+    return await AppDataSource.transaction(async (manager) => {
+      // Get user's cart (read-only operation, no transaction needed)
       const cart = await this.cartService.getUserCart(userId);
-      
+
       if (!cart || !cart.items || cart.items.length === 0) {
         throw new Error("Cart is empty");
       }
 
-      // Get wallet and verify it belongs to the user
+      // Get wallet and verify it belongs to the user (read-only operation)
       const wallet = await this.walletService.findById(walletId);
-      
+
       if (!wallet) {
         throw new Error("Wallet not found");
       }
@@ -198,7 +194,7 @@ export class OrderService {
 
       for (const cartItem of cart.items) {
         const product = cartItem.product;
-        
+
         // Check if product currency matches wallet currency
         if (product.currency !== wallet.currency) {
           throw new Error(
@@ -206,8 +202,11 @@ export class OrderService {
           );
         }
 
-        // Check inventory
-        const isInStock = await this.productService.isInStock(product.id, cartItem.qty);
+        // Check inventory (read-only operation)
+        const isInStock = await this.productService.isInStock(
+          product.id,
+          cartItem.qty
+        );
         if (!isInStock) {
           throw new Error(
             `Insufficient stock for product ${product.name}. Required: ${cartItem.qty}, Available: ${product.stockQty}`
@@ -232,38 +231,43 @@ export class OrderService {
         );
       }
 
-      // Decrease product stock for each item
+      // Now perform all database modifications within the transaction using repositories
+
+      // 1. Decrease product stock for each item
       for (const cartItem of cart.items) {
-        await this.productService.decreaseStock(cartItem.product.id, cartItem.qty);
+        await this.productService.decreaseStock(
+          cartItem.product.id,
+          cartItem.qty,
+          manager
+        );
       }
 
-      // Decrease wallet balance
-      await this.walletService.decreaseBalance({
+      // 2. Decrease wallet balance
+      await this.walletService.decreaseBalance(
+        {
+          userId,
+          currency: wallet.currency,
+          amountMinor: totalMinor,
+        },
+        manager
+      );
+
+      // 3. Create the order with items
+      const order = await this.orderRepository.createOrder(
         userId,
-        currency: wallet.currency,
-        amountMinor: totalMinor,
-      });
+        {
+          totalMinor,
+          currency: wallet.currency,
+          status: "CONFIRMED",
+        },
+        orderItems,
+        manager
+      );
 
-      // Create the order
-      const order = await this.createOrder({
-        userId,
-        totalMinor,
-        currency: wallet.currency,
-        status: "CONFIRMED",
-        items: orderItems,
-      });
+      // 4. Clear the user's cart
+      await this.cartService.clearUserCart(userId, manager);
 
-      // Clear the user's cart
-      await this.cartService.clearUserCart(userId);
-
-      await queryRunner.commitTransaction();
-      
       return order;
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+    });
   }
 }

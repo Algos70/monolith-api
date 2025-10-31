@@ -39,19 +39,20 @@ export class OrderRepository {
   async createOrder(
     userId: string, 
     orderData: { totalMinor: number; currency: string; status?: string },
-    items: Array<{ productId: string; qty: number; unitPriceMinor: number; currency: string }>
+    items: Array<{ productId: string; qty: number; unitPriceMinor: number; currency: string }>,
+    manager?: any
   ): Promise<Order> {
-    return await AppDataSource.transaction(async manager => {
+    const executeOperation = async (entityManager: any) => {
       // Create order
-      const order = manager.create(Order, {
+      const order = entityManager.create(Order, {
         user: { id: userId },
         ...orderData
       });
-      const savedOrder = await manager.save(order);
+      const savedOrder = await entityManager.save(order);
 
       // Create order items
       const orderItems = items.map(item => 
-        manager.create(OrderItem, {
+        entityManager.create(OrderItem, {
           order: { id: savedOrder.id },
           product: { id: item.productId },
           qty: item.qty,
@@ -60,14 +61,20 @@ export class OrderRepository {
         })
       );
       
-      await manager.save(orderItems);
+      await entityManager.save(orderItems);
 
       // Return order with items
-      return await manager.findOne(Order, {
+      return await entityManager.findOne(Order, {
         where: { id: savedOrder.id },
         relations: ["user", "items", "items.product"]
       }) as Order;
-    });
+    };
+
+    if (manager) {
+      return await executeOperation(manager);
+    } else {
+      return await AppDataSource.transaction(executeOperation);
+    }
   }
 
   async updateStatus(orderId: string, status: string): Promise<void> {

@@ -104,10 +104,37 @@ export class CartRepository {
     });
   }
 
-  async clearCart(cartId: string): Promise<void> {
-    await this.cartItemRepository.delete({
-      cart: { id: cartId },
-    });
+  async clearCart(cartId: string, manager?: any): Promise<void> {
+    if (manager) {
+      await manager.delete(CartItem, {
+        cart: { id: cartId },
+      });
+    } else {
+      await this.cartItemRepository.delete({
+        cart: { id: cartId },
+      });
+    }
+  }
+
+  async clearCartByUserId(userId: string, manager?: any): Promise<void> {
+    const executeOperation = async (entityManager: any) => {
+      // First find the cart
+      const cart = await entityManager.findOne(Cart, {
+        where: { user: { id: userId } }
+      });
+      
+      if (cart) {
+        await entityManager.delete(CartItem, {
+          cart: { id: cart.id },
+        });
+      }
+    };
+
+    if (manager) {
+      await executeOperation(manager);
+    } else {
+      await AppDataSource.transaction(executeOperation);
+    }
   }
 
   async deleteCart(id: string): Promise<void> {

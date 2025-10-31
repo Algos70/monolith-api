@@ -141,17 +141,23 @@ export class CartService {
     return await this.cartRepository.getCartByUser(userId);
   }
 
-  async clearUserCart(userId: string) {
-    const cart = await this.cartRepository.getCartByUser(userId);
-    
-    if (!cart) {
-      throw new Error("Cart not found");
-    }
+  async clearUserCart(userId: string, manager?: any) {
+    if (manager) {
+      // Use transaction manager for clearing cart by user ID directly
+      await this.cartRepository.clearCartByUserId(userId, manager);
+      return null; // In transaction context, we don't need to return the cart
+    } else {
+      const cart = await this.cartRepository.getCartByUser(userId);
+      
+      if (!cart) {
+        throw new Error("Cart not found");
+      }
 
-    await this.cartRepository.clearCart(cart.id);
-    
-    // Return updated cart
-    return await this.cartRepository.getCartByUser(userId);
+      await this.cartRepository.clearCart(cart.id);
+      
+      // Return updated cart
+      return await this.cartRepository.getCartByUser(userId);
+    }
   }
 
   async updateItemQuantity(userId: string, productId: string, quantity: number) {

@@ -283,9 +283,9 @@ export class ProductService {
       'product:v1:*'
     ]
   })
-  async decreaseStock(productId: string, qty: number): Promise<Product | null> {
+  async decreaseStock(productId: string, qty: number, manager?: any): Promise<Product | null> {
     this.validateStockQuantity(qty);
-    return await this.productRepository.decreaseStock(productId, qty);
+    return await this.productRepository.decreaseStock(productId, qty, manager);
   }
 
   // Stok artır

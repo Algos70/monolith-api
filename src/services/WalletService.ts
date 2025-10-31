@@ -120,7 +120,7 @@ export class WalletService {
     return wallet;
   }
 
-  async decreaseBalance(data: BalanceOperationData): Promise<Wallet> {
+  async decreaseBalance(data: BalanceOperationData, manager?: any): Promise<Wallet> {
     const { userId, currency, amountMinor } = data;
 
     if (amountMinor <= 0) {
@@ -130,7 +130,7 @@ export class WalletService {
     }
 
     try {
-      const wallet = await this.walletRepository.decreaseBalance(userId, currency, amountMinor);
+      const wallet = await this.walletRepository.decreaseBalance(userId, currency, amountMinor, manager);
       if (!wallet) {
         const error = new Error(`Wallet not found for user ${userId} and currency ${currency}`) as any;
         error.code = "NOT_FOUND";

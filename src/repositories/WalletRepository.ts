@@ -64,9 +64,9 @@ export class WalletRepository {
     });
   }
 
-  async decreaseBalance(userId: string, currency: string, amountMinor: number): Promise<Wallet | null> {
-    return await AppDataSource.transaction(async manager => {
-      const wallet = await manager.findOne(Wallet, {
+  async decreaseBalance(userId: string, currency: string, amountMinor: number, manager?: any): Promise<Wallet | null> {
+    const executeOperation = async (entityManager: any) => {
+      const wallet = await entityManager.findOne(Wallet, {
         where: { user: { id: userId }, currency },
         relations: ["user"]
       });
@@ -80,8 +80,14 @@ export class WalletRepository {
       }
 
       wallet.balanceMinor -= amountMinor;
-      return await manager.save(wallet);
-    });
+      return await entityManager.save(wallet);
+    };
+
+    if (manager) {
+      return await executeOperation(manager);
+    } else {
+      return await AppDataSource.transaction(executeOperation);
+    }
   }
 
   async transfer(fromUserId: string, toUserId: string, currency: string, amountMinor: number): Promise<void> {
