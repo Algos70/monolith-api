@@ -6,10 +6,8 @@ on:
       - dev
       - main
 
-
 permissions:
-  contents: write 
-
+  contents: write
 
 jobs:
   release:
@@ -38,12 +36,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
 
-      - name: Get release version
-        if: steps.semrel.outputs.new_release_published == 'true'
-        run: echo "RELEASE_VERSION=${{ steps.semrel.outputs.new_release_version }}" >> $GITHUB_ENV
-
-      - name: Log release version
-        run: echo "New version is ${{ env.RELEASE_VERSION }}"
+      - name: Log release info
+        run: |
+          echo "Published? ${{ steps.semrel.outputs.new_release_published }}"
+          echo "Version: ${{ steps.semrel.outputs.new_release_version }}"
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -53,7 +49,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        if: env.RELEASE_VERSION != ''
+        if: ${{ steps.semrel.outputs.new_release_published == 'true' }}
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -61,4 +57,4 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/monolith-api:latest
-            ghcr.io/${{ env.OWNER_LC }}/monolith-api:v${{ env.RELEASE_VERSION }}
+            ghcr.io/${{ env.OWNER_LC }}/monolith-api:v${{ steps.semrel.outputs.new_release_version }}
