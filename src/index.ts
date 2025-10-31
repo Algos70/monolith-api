@@ -23,7 +23,7 @@ const PORT = process.env.PORT || 4000;
 // Middleware
 app.use(
   cors({
-    origin: true,
+    origin: ["http://localhost:3000", "http://web-client:3000"],
     credentials: true,
   })
 );
@@ -94,8 +94,8 @@ const startServer = async () => {
       name: "connect.sid",
       cookie: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: false,
+        sameSite: "none",
         maxAge: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
       },
     });

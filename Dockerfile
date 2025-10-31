@@ -24,4 +24,4 @@ ENV PORT=4000
 EXPOSE 4000
 
 # 5. Server'ı başlat
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/src/index.js"]
