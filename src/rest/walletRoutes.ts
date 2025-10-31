@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { UserWalletService } from "../services/UserWalletService";
+import { WalletService } from "../services/WalletService";
 import { SessionService } from "../services/SessionService";
 import {
   requireWalletReadPermission,
@@ -8,7 +8,7 @@ import {
 import { rateLimitMiddleware } from "../cache/RateLimitMiddleware";
 
 const router = Router();
-const userWalletService = new UserWalletService();
+const userWalletService = new WalletService();
 
 // Helper function to get current user ID from session
 const getCurrentUserId = (req: Request): string => {

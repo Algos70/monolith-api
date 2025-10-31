@@ -1,4 +1,4 @@
-import { UserWalletService } from "../../services/UserWalletService";
+import { WalletService } from "../../services/WalletService";
 import {
   UserInputError,
   ForbiddenError,
@@ -9,7 +9,7 @@ import {
   RequireWalletWritePermission,
 } from "../decorators/permissions";
 
-const userWalletService = new UserWalletService();
+const userWalletService = new WalletService();
 
 // Helper function to get current user ID from GraphQL context
 const getCurrentUserId = (context: GraphQLContext): string => {
