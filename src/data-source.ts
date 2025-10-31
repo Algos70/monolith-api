@@ -12,5 +12,9 @@ export const AppDataSource = new DataSource({
   synchronize: false, // Never use true in production
   logging: process.env.NODE_ENV === "development",
   entities: entities,
-  migrations: ["migrations/*.ts"],
+  migrations: [
+    process.env.NODE_ENV === "production"
+      ? "dist/migrations/*.js"
+      : "migrations/*.ts",
+  ],
 });

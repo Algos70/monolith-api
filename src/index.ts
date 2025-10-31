@@ -66,6 +66,11 @@ const startServer = async () => {
     await AppDataSource.initialize();
     console.log("📊 Database connected successfully");
 
+    // Run pending migrations automatically
+    console.log("🔄 Running database migrations...");
+    await AppDataSource.runMigrations();
+    console.log("✅ Database migrations completed successfully");
+
     // Initialize Redis connection
     const redis = RedisClient.getInstance();
     const redisClient = redis.getClient();
