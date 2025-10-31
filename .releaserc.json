@@ -5,7 +5,7 @@
     "@semantic-release/release-notes-generator",
     "@semantic-release/github",
     [
-      "@semantic-release/docker",
+      "@semantic-release-plus/docker",
       {
         "name": "ghcr.io/algos70/monolith-api",
         "registryUrl": "https://ghcr.io",

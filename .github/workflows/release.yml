@@ -33,6 +33,9 @@ jobs:
 
       - name: Login to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ env.OWNER_LC }} --password-stdin
+      
+      - name: Clean npm cache
+        run: npm cache clean --force
 
       - name: Run Semantic Release (GitHub + Docker)
         env:
