@@ -36,13 +36,13 @@ export interface KeycloakTokenPayload {
 export interface SessionUser {
   sub: string; // Keycloak user ID
   email_verified: boolean;
-  permissions: string[];
+  permissions?: string[]; // Optional permissions array
   name: string;
   preferred_username: string;
   given_name: string;
   family_name: string;
   email: string;
-  dbUserId: string; // Database user ID
+  dbUserId?: string; // Optional database user ID
   access_token: string;
   refresh_token: string;
   id_token: string;

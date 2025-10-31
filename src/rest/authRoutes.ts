@@ -91,7 +91,7 @@ router.post(
 
       const userInfo = userInfoResponse.data;
 
-      // Create user session
+      // Create user session (userInfo already contains permissions from Keycloak)
       const userSession = {
         ...userInfo,
         access_token: tokens.access_token,

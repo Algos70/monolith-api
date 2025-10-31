@@ -23,7 +23,7 @@ export function createPermissionChecker(user: SessionUser): PermissionChecker {
  * Helper function to check if user has specific permission
  */
 export function hasPermission(user: SessionUser | undefined, permission: Permission): boolean {
-  if (!user) return false;
+  if (!user || !user.permissions) return false;
   return user.permissions.includes(permission);
 }
 
@@ -31,7 +31,7 @@ export function hasPermission(user: SessionUser | undefined, permission: Permiss
  * Helper function to check if user has any of the specified permissions
  */
 export function hasAnyPermission(user: SessionUser | undefined, permissions: Permission[]): boolean {
-  if (!user) return false;
+  if (!user || !user.permissions) return false;
   return permissions.some(permission => user.permissions.includes(permission));
 }
 
@@ -39,7 +39,7 @@ export function hasAnyPermission(user: SessionUser | undefined, permissions: Per
  * Helper function to check if user has all specified permissions
  */
 export function hasAllPermissions(user: SessionUser | undefined, permissions: Permission[]): boolean {
-  if (!user) return false;
+  if (!user || !user.permissions) return false;
   return permissions.every(permission => user.permissions.includes(permission));
 }
 

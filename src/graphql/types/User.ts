@@ -1,14 +1,36 @@
 // GraphQL type definitions for User
 export const userTypeDefs = `
   type User {
-    id: ID!
+    # Database fields
+    id: ID
     email: String!
     name: String
-    createdAt: String!
-    updatedAt: String!
+    createdAt: String
+    updatedAt: String
     wallets: [Wallet!]
     orders: [Order!]
     carts: [Cart!]
+    
+    # Keycloak fields (from session)
+    sub: String
+    preferred_username: String
+    given_name: String
+    family_name: String
+    email_verified: Boolean
+    permissions: [String!]
+    dbUserId: ID
+    
+    # Additional Keycloak fields
+    iss: String
+    aud: String
+    exp: Int
+    iat: Int
+    jti: String
+    typ: String
+    azp: String
+    sid: String
+    acr: String
+    scope: String
   }
 
 

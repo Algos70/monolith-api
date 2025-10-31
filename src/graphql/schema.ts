@@ -1,3 +1,4 @@
+import { authTypeDefs } from "./types/Auth";
 import { userTypeDefs } from "./types/User";
 import { categoryTypeDefs } from "./types/Category";
 import { productTypeDefs } from "./types/Product";
@@ -19,6 +20,7 @@ const baseTypeDefs = `
 
 export const typeDefs = [
   baseTypeDefs,
+  authTypeDefs,
   categoryTypeDefs,
   productTypeDefs,
   userTypeDefs,

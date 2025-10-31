@@ -1,3 +1,4 @@
+import { authResolvers } from './authResolvers';
 import { adminUserResolvers } from './adminUserResolvers';
 import { adminCategoryResolvers } from './adminCategoryResolvers';
 import { adminProductResolvers } from './adminProductResolvers';
@@ -13,6 +14,7 @@ import { orderResolvers } from './orderResolvers';
 
 export const resolvers = {
   Query: {
+    ...authResolvers.Query,
     ...adminUserResolvers.Query,
     ...adminCategoryResolvers.Query,
     ...adminProductResolvers.Query,
@@ -27,6 +29,7 @@ export const resolvers = {
     ...orderResolvers.Query
   },
   Mutation: {
+    ...authResolvers.Mutation,
     ...adminCategoryResolvers.Mutation,
     ...adminProductResolvers.Mutation,
     ...adminWalletResolvers.Mutation,

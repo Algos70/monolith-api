@@ -9,7 +9,21 @@ import { expressMiddleware } from "@as-integrations/express5";
 import { AppDataSource } from "./data-source";
 import { RedisClient } from "./cache/RedisClient";
 import { verifyBearer, requireBearerRoles } from "./auth/middleware";
-import { authRoutes, productRoutes, categoryRoutes, cartRoutes, walletRoutes, orderRoutes, adminUserRoutes, adminCategoryRoutes, adminProductRoutes, adminWalletRoutes, adminOrderRoutes, adminOrderItemRoutes, adminCartRoutes } from "./rest";
+import {
+  authRoutes,
+  productRoutes,
+  categoryRoutes,
+  cartRoutes,
+  walletRoutes,
+  orderRoutes,
+  adminUserRoutes,
+  adminCategoryRoutes,
+  adminProductRoutes,
+  adminWalletRoutes,
+  adminOrderRoutes,
+  adminOrderItemRoutes,
+  adminCartRoutes,
+} from "./rest";
 import { typeDefs, resolvers } from "./graphql";
 import { rateLimitMiddleware } from "./cache/RateLimitMiddleware";
 import { createGraphQLRateLimitPlugin } from "./graphql/plugins/rateLimitPlugin";
@@ -51,7 +65,7 @@ app.get(
   "/api/testRole",
   verifyBearer,
   requireBearerRoles(["admin"]),
-  (req, res) => res.json({ ok: true })
+  (_req, res) => res.json({ ok: true })
 );
 
 // Basic route
@@ -95,7 +109,7 @@ const startServer = async () => {
       cookie: {
         httpOnly: true,
         secure: false,
-        sameSite: "none",
+        sameSite: "lax", // Development için "lax" kullan, production'da "none" olabilir
         maxAge: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
       },
     });
@@ -104,11 +118,14 @@ const startServer = async () => {
     app.use(sessionMiddleware);
 
     // Apply general rate limiting (before routes)
-    app.use("/api", rateLimitMiddleware.createIPRateLimit({
-      windowMs: 60000, // 1 minute
-      maxRequests: 300, // 300 requests per minute per IP (3x)
-      message: "Too many API requests"
-    }));
+    app.use(
+      "/api",
+      rateLimitMiddleware.createIPRateLimit({
+        windowMs: 60000, // 1 minute
+        maxRequests: 300, // 300 requests per minute per IP (3x)
+        message: "Too many API requests",
+      })
+    );
 
     // Create Apollo Server
     const server = new ApolloServer({
@@ -118,7 +135,7 @@ const startServer = async () => {
         createGraphQLRateLimitPlugin({
           generalLimit: { windowMs: 60000, maxRequests: 600 }, // 600 GraphQL req/min (3x)
           // queryLimits are now defined in the plugin constructor with all operations
-        })
+        }),
       ],
       formatError,
     });
@@ -148,14 +165,14 @@ const startServer = async () => {
 
     // Add routes after session middleware
     app.use("/api", authRoutes);
-    
+
     // Public/User routes
     app.use("/api/products", productRoutes);
     app.use("/api/categories", categoryRoutes);
     app.use("/api/cart", cartRoutes);
     app.use("/api/wallets", walletRoutes);
     app.use("/api/orders", orderRoutes);
-    
+
     // Admin routes
     app.use("/api/admin/users", adminUserRoutes);
     app.use("/api/admin/categories", adminCategoryRoutes);
