@@ -1,0 +1,13 @@
+export { default as authRoutes } from './authRoutes';
+export { default as productRoutes } from './productRoutes';
+export { default as categoryRoutes } from './categoryRoutes';
+export { default as cartRoutes } from './cartRoutes';
+export { default as walletRoutes } from './walletRoutes';
+export { default as orderRoutes } from './orderRoutes';
+export { default as adminUserRoutes } from './adminUserRoutes';
+export { default as adminCategoryRoutes } from './adminCategoryRoutes';
+export { default as adminProductRoutes } from './adminProductRoutes';
+export { default as adminWalletRoutes } from './adminWalletRoutes';
+export { default as adminOrderRoutes } from './adminOrderRoutes';
+export { default as adminOrderItemRoutes } from './adminOrderItemRoutes';
+export { default as adminCartRoutes } from './adminCartRoutes';
