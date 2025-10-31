@@ -1,26 +1,27 @@
-# Use Node.js 20 LTS
-FROM node:20-alpine
-
-# Set working directory
+# ---------- BUILD STAGE ----------
+FROM node:22-alpine AS builder
 WORKDIR /app
 
-# Copy package files
+# 1. Paketleri yükle
 COPY package*.json ./
-
-# Install all dependencies (including dev dependencies for build)
 RUN npm ci
 
-# Copy source code
+# 2. Kodları kopyala ve derle
 COPY . .
-
-# Build the application
 RUN npm run build
 
-# Remove dev dependencies after build
-RUN npm ci --only=production
+# ---------- RUNTIME STAGE ----------
+FROM node:22-alpine
+WORKDIR /app
 
-# Expose port
+# 3. Build çıktısını ve bağımlılıkları taşı
+COPY --from=builder /app/dist ./dist
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# 4. Environment değişkenleri
+ENV PORT=4000
 EXPOSE 4000
 
-# Start the application (migrations will run automatically in src/index.ts)
-CMD ["npm", "run", "dev"]
+# 5. Server'ı başlat
+CMD ["node", "dist/index.js"]

@@ -6,7 +6,9 @@
     "strict": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "skipLibCheck": true
   },
-  "include": ["src", "migrations"]
+  "include": ["src", "migrations"],
+  "exclude": ["node_modules", "dist", "test"]
 }
