@@ -1,13 +1,14 @@
-name: Build and Release Docker Image
+name: Build and Release (Semantic + Docker)
 
 on:
   push:
     branches:
-      - dev
       - main
+      - dev
 
 permissions:
   contents: write
+  packages: write 
 
 jobs:
   release:
@@ -16,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # semantic-release için zorunlu
+          fetch-depth: 0
 
       - name: Set lowercase owner
         id: vars
@@ -30,31 +31,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run semantic-release
-        id: semrel
+      - name: Build Docker image locally (so plugin can find it)
+        run: docker build -t ${{ env.OWNER_LC }}/monolith-api:latest .
+  
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ env.OWNER_LC }} --password-stdin
+      
+      - name: Clean npm cache
+        run: npm cache clean --force
+
+      - name: Run Semantic Release (GitHub + Docker)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCKER_REGISTRY_URL: ghcr.io
+          DOCKER_USERNAME: ${{ github.actor }}
+          DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
-
-      - name: Log release info
-        run: |
-          echo "Published? ${{ steps.semrel.outputs.new_release_published }}"
-          echo "Version: ${{ steps.semrel.outputs.new_release_version }}"
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ env.OWNER_LC }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        if: ${{ steps.semrel.outputs.new_release_published == 'true' }}
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ env.OWNER_LC }}/monolith-api:latest
-            ghcr.io/${{ env.OWNER_LC }}/monolith-api:v${{ steps.semrel.outputs.new_release_version }}
