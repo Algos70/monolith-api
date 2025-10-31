@@ -1,5 +1,8 @@
 {
-  "branches": ["main", "dev"],
+  "branches": [
+    "main",
+    { "name": "dev", "prerelease": true }
+  ],
   "repositoryUrl": "https://github.com/Algos70/monolith-api.git",
   "plugins": [
     "@semantic-release/commit-analyzer",
