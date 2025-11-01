@@ -18,22 +18,32 @@ jobs:
           docker compose version
           docker version
       
-      
       - name: Build and start all services
         run: |
           docker compose up -d --build
 
+      - name: Wait for Monolith API to be ready
+        run: |
+          echo "⏳ Waiting for API healthcheck..."
+          npx wait-on --timeout 90000 --interval 2000 http://localhost:4000/health
+
       - name: Debug logs if healthcheck fails
+        if: failure()
         run: |
           echo "🔍 Monolith API logs:"
           docker compose logs monolith-api
           echo "🔍 Keycloak logs:"
           docker compose logs keycloak
 
-      - name: Run integration tests
+      - name: Install k6
         run: |
-          npm ci
-          npm run test:integration
+          sudo apt-get update
+          sudo apt-get install -y k6
+
+      - name: Run K6 integration tests
+        run: |
+          echo "🚀 Running K6 integration tests..."
+          k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/auth.test.js
 
       - name: Show logs if failed
         if: failure()
