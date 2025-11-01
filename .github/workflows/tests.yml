@@ -44,7 +44,8 @@ jobs:
           POSTGRES_PASSWORD: keycloak
 
       keycloak:
-        image: ghcr.io/${{ github.repository_owner }}/keycloak-shop:latest
+        image: ghcr.io/${{ github.repository_owner,, }}/keycloak-shop:latest
+
         env:
           KEYCLOAK_ADMIN: admin
           KEYCLOAK_ADMIN_PASSWORD: admin
