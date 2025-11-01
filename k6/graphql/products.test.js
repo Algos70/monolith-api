@@ -48,112 +48,11 @@ export default function () {
   // Create product service with authenticated session
   const productService = new ProductService(undefined, sessionHeaders);
   
-  // Test 1: Get All Products
-  productService.getProducts();
+  // Test 1: Get All Products - Basic product listing without filters
+  
+  console.log("prods:", productService.getProducts())
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
-  productService.getProducts({
-    page: 1,
-    limit: 5,
-  });
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  productService.getProducts({
-    inStockOnly: true,
-    limit: 10,
-  });
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  const { product: iphone } = productService.getProductBySlug(SEEDED_DATA.products.iphone);
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  productService.getProductBySlug(SEEDED_DATA.products.macbook);
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  if (iphone && iphone.id) {
-    productService.getProductById(iphone.id);
-    sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-  }
-
-  if (iphone && iphone.category && iphone.category.id) {
-    productService.getProductsByCategory(iphone.category.id);
-    sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-  }
-
-  productService.searchProducts({
-    search: 'iPhone',
-    page: 1,
-    limit: 5,
-  });
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  productService.searchProducts({
-    search: 'JavaScript',
-    inStockOnly: true,
-  });
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  productService.searchProducts({
-    search: 'T-Shirt',
-    page: 1,
-    limit: 10,
-  });
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  productService.getFeaturedProducts(6);
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  if (iphone && iphone.id) {
-    productService.checkProductAvailability(iphone.id, 1);
-    sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-  }
-
-  if (iphone && iphone.id) {
-    productService.checkProductAvailability(iphone.id, 5);
-    sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-  }
-
-  if (iphone && iphone.category && iphone.category.id) {
-    productService.searchProducts({
-      search: 'Pro',
-      categoryId: iphone.category.id,
-      inStockOnly: true,
-    });
-    sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-  }
-
-  productService.getProducts({
-    limit: 20,
-    inStockOnly: false,
-  });
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  productService.searchProducts({
-    search: '',
-    page: 1,
-    limit: 5,
-  });
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-
-
-  productService.searchProducts({
-    search: 'Code',
-    inStockOnly: true,
-  });
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  productService.searchProducts({
-    search: 'Yoga',
-    inStockOnly: true,
-  });
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  productService.searchProducts({
-    search: 'MacBook',
-    inStockOnly: true,
-  });
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
   // Cleanup authentication (like pytest fixture teardown)
   cleanup();

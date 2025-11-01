@@ -64,7 +64,19 @@ export class ProductService {
     keyGenerator: (slug: string) => `product:v1:${slug}`
   })
   async findBySlug(slug: string): Promise<Product | null> {
-    return await this.productRepository.findBySlug(slug);
+    try {
+      // Validate slug parameter
+      if (!slug || typeof slug !== 'string' || slug.trim().length === 0) {
+        return null;
+      }
+
+      const normalizedSlug = slug.trim();
+      return await this.productRepository.findBySlug(normalizedSlug);
+    } catch (error) {
+      console.error('Error in ProductService.findBySlug:', error);
+      // Return null instead of throwing to prevent internal server errors
+      return null;
+    }
   }
 
   // Kategori ID'sine göre ürünleri bul

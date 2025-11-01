@@ -161,7 +161,6 @@ export const authResolvers = {
 
         // Clear session
         await SessionService.destroySession(context.req, context.res);
-
         return result;
       } catch (error) {
         console.error("GraphQL Logout error:", error);

@@ -33,18 +33,27 @@ export function Cache(options: CacheDecoratorOptions = {}) {
         cacheKey = `${target.constructor.name.toLowerCase()}:${version}:${propertyName}${argsKey}`;
       }
 
-      // Try to get from cache
-      const cached = await cacheService.get(cacheKey);
-      if (cached !== null) {
-        return cached;
+      // Try to get from cache with error handling
+      let cached = null;
+      try {
+        cached = await cacheService.get(cacheKey);
+        if (cached !== null) {
+          return cached;
+        }
+      } catch (cacheError) {
+        console.warn('Cache read error, proceeding without cache:', cacheError);
       }
 
       // Execute original method
       const result = await method.apply(this, args);
 
-      // Cache the result
+      // Cache the result with error handling
       if (result !== null && result !== undefined) {
-        await cacheService.set(cacheKey, result, options.ttl);
+        try {
+          await cacheService.set(cacheKey, result, options.ttl);
+        } catch (cacheError) {
+          console.warn('Cache write error, result still returned:', cacheError);
+        }
       }
 
       return result;
@@ -71,9 +80,13 @@ export function InvalidateCache(options: { patterns: string[] }) {
       // Execute original method
       const result = await method.apply(this, args);
 
-      // Invalidate cache patterns
+      // Invalidate cache patterns with error handling
       for (const pattern of options.patterns) {
-        await cacheService.deletePattern(pattern);
+        try {
+          await cacheService.deletePattern(pattern);
+        } catch (cacheError) {
+          console.warn('Cache invalidation error, operation still completed:', cacheError);
+        }
       }
 
       return result;
