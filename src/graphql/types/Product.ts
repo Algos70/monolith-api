@@ -85,7 +85,7 @@ export const productTypeDefs = `
       categoryId: ID
       inStockOnly: Boolean = true
     ): ProductConnection!
-    product(id: ID!): Product!
+    product(id: ID!): ProductResult!
     productBySlug(slug: String!): ProductResult!
     productsByCategory(categoryId: ID!): [Product!]!
     productAvailability(id: ID!, qty: Int = 1): ProductAvailability!

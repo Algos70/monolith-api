@@ -494,7 +494,7 @@ export class ProductService {
       const product = await this.findById(id);
       if (!product) {
         return {
-          success: true,
+          success: false,
           message: "Product not found",
           product: null as any,
         };

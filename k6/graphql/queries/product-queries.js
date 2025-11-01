@@ -33,18 +33,22 @@ export const PRODUCT_QUERIES = {
   GET_PRODUCT_BY_ID: `
     query GetProduct($id: ID!) {
       product(id: $id) {
-        id
-        name
-        slug
-        priceMinor
-        currency
-        stockQty
-        createdAt
-        updatedAt
-        category {
+        success
+        message
+        product {
           id
           name
           slug
+          priceMinor
+          currency
+          stockQty
+          createdAt
+          updatedAt
+          category {
+            id
+            name
+            slug
+          }
         }
       }
     }
