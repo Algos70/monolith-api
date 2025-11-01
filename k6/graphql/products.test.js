@@ -36,6 +36,15 @@ export default async function () {
 
   // Test 5: Get featured products 
   await productService.getFeaturedProducts({ limit: 8 });
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
+
+  // Test 6: Search products - Test search functionality with different parameters
+  await productService.searchProducts({
+    search: "AirPods",
+    inStockOnly: true,
+    page: 1,
+    limit: 10,
+  });
 
   console.log("\n✅ Product User Tests Completed");
 }

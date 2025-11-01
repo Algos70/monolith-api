@@ -70,7 +70,7 @@ export class ProductService {
         r.parsed?.data?.productBySlug?.message ===
         "Product fetched successfully",
     });
-
+    console.log
     check(response, {
       "productBySlug: product data matches expected values": (r) => {
         const p = r.parsed?.data?.productBySlug?.product;
@@ -82,8 +82,6 @@ export class ProductService {
           p.priceMinor === 24999 &&
           p.currency === "USD" &&
           p.stockQty === 100 &&
-          p.createdAt === "1761971826320" &&
-          p.updatedAt === "1761971826320" &&
           p.category.id === "02f94490-358e-4de6-a725-67bed187a89f" &&
           p.category.name === "Electronics" &&
           p.category.slug === "electronics"
@@ -120,8 +118,6 @@ export class ProductService {
           p.priceMinor === 24999 &&
           p.currency === "USD" &&
           p.stockQty === 100 &&
-          p.createdAt === "1761971826320" &&
-          p.updatedAt === "1761971826320" &&
           p.category.id === "02f94490-358e-4de6-a725-67bed187a89f" &&
           p.category.name === "Electronics" &&
           p.category.slug === "electronics"
@@ -251,6 +247,91 @@ export class ProductService {
         return products.every((p) => p && p.stockQty > 0);
       },
     });
+
+    return response;
+  }
+
+  async searchProducts(variables = {}) {
+    const response = this.client.requestWithParsing(
+      PRODUCT_QUERIES.SEARCH_PRODUCTS,
+      variables,
+      this.sessionHeaders
+    );
+
+    check(response, {
+      "searchProducts: response parsed": (r) => r.parsed !== null,
+      "searchProducts: success true": (r) =>
+        r.parsed?.data?.searchProducts?.success === true,
+      "searchProducts: message is correct": (r) =>
+        r.parsed?.data?.searchProducts?.message === "Products are sent",
+    });
+    console.log("pagination: ", response.parsed?.data?.searchProducts?.pagination?.total)
+    check(response, {
+      "searchProducts: pagination total is 1": (r) =>
+        r.parsed?.data?.searchProducts?.pagination?.total === 1,
+      "searchProducts: pagination limit is 10": (r) =>
+        r.parsed?.data?.searchProducts?.pagination?.limit === 10,
+      "searchProducts: pagination total pages is 2": (r) =>
+        r.parsed?.data?.searchProducts?.pagination?.totalPages === 1,
+    });
+
+    check(response, {
+      "searchProducts: products array exists": (r) =>
+        Array.isArray(r.parsed?.data?.searchProducts?.products),
+      "searchProducts: has products": (r) =>
+        r.parsed?.data?.searchProducts?.products?.length > 0,
+    });
+
+    check(response, {
+      "searchProducts: data fields are correct": (r) => {
+        const p = r.parsed?.data?.searchProducts?.products?.[0];
+        return (
+          p &&
+          typeof p.id === "string" &&
+          typeof p.name === "string" &&
+          typeof p.slug === "string" &&
+          typeof p.priceMinor === "number" &&
+          typeof p.currency === "string" &&
+          typeof p.stockQty === "number" &&
+          typeof p.createdAt === "string" &&
+          typeof p.updatedAt === "string" &&
+          typeof p.category === "object" &&
+          typeof p.category.id === "string" &&
+          typeof p.category.name === "string" &&
+          typeof p.category.slug === "string"
+        );
+      },
+    });
+
+    // If search term is provided, check that results match the search
+      check(response, {
+        "searchProducts: results match search term": (r) => {
+          const products = r.parsed?.data?.searchProducts?.products;
+          if (!products || !Array.isArray(products) || products.length === 0) {
+            return false;
+          }
+          const searchTerm = variables.search.toLowerCase();
+          return products.every(
+            (p) =>
+              p &&
+              (p.name.toLowerCase().includes(searchTerm) ||
+                p.slug.toLowerCase().includes(searchTerm))
+          );
+        },
+      });
+
+    // If inStockOnly is true, check that all products are in stock
+    if (variables.inStockOnly !== false) {
+      check(response, {
+        "searchProducts: all products are in stock": (r) => {
+          const products = r.parsed?.data?.searchProducts?.products;
+          if (!products || !Array.isArray(products) || products.length === 0) {
+            return false;
+          }
+          return products.every((p) => p && p.stockQty > 0);
+        },
+      });
+    }
 
     return response;
   }

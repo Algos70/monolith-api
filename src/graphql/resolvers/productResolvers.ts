@@ -47,16 +47,11 @@ export class ProductResolvers {
 
   @RequirePermission("products_read")
   async featuredProducts(_: any, { limit = 8 }: any, context: GraphQLContext) {
-    try {
-      return await productService.getProductsForAdmin({
+    return await productService.getProductsForAdmin({
         page: 1,
         limit,
         inStockOnly: true,
       });
-    } catch (error) {
-      console.error("GraphQL featuredProducts error:", error);
-      throw new Error("Failed to fetch featured products");
-    }
   }
 
   @RequirePermission("products_read")
@@ -65,7 +60,6 @@ export class ProductResolvers {
     { search, categoryId, inStockOnly = true, page = 1, limit = 10 }: any,
     context: GraphQLContext
   ) {
-    try {
       return await productService.getProductsForAdmin({
         search,
         categoryId,
@@ -73,10 +67,6 @@ export class ProductResolvers {
         page,
         limit,
       });
-    } catch (error) {
-      console.error("GraphQL searchProducts error:", error);
-      throw new Error("Failed to search products");
-    }
   }
 }
 
