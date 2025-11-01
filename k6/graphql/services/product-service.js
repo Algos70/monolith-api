@@ -91,6 +91,8 @@ export class ProductService {
       },
     });
 
+    console.log("byslug: ", response);
+
     return response;
   }
 
@@ -125,6 +127,66 @@ export class ProductService {
           p.category.id === "02f94490-358e-4de6-a725-67bed187a89f" &&
           p.category.name === "Electronics" &&
           p.category.slug === "electronics"
+        );
+      },
+    });
+
+    return response;
+  }
+
+  async getProductsByCategory(variables = {}) {
+    const response = this.client.requestWithParsing(
+      PRODUCT_QUERIES.GET_PRODUCTS_BY_CATEGORY,
+      variables,
+      this.sessionHeaders
+    );
+
+    console.log("response: ", response);
+
+    check(response, {
+      "productsByCategory: response parsed": (r) => r.parsed !== null,
+      "productsByCategory: success true": (r) =>
+        r.parsed?.data?.productsByCategory?.success === true,
+      "productsByCategory: message contains 'Found'": (r) =>
+        r.parsed?.data?.productsByCategory?.message?.includes("Found"),
+    });
+
+    check(response, {
+      "productsByCategory: products array exists": (r) =>
+        Array.isArray(r.parsed?.data?.productsByCategory?.products),
+      "productsByCategory: has products": (r) =>
+        r.parsed?.data?.productsByCategory?.products?.length > 0,
+    });
+
+    check(response, {
+      "productsByCategory: product data fields are correct": (r) => {
+        const p = r.parsed?.data?.productsByCategory?.products?.[0];
+        return (
+          p &&
+          typeof p.id === "string" &&
+          typeof p.name === "string" &&
+          typeof p.slug === "string" &&
+          typeof p.priceMinor === "number" &&
+          typeof p.currency === "string" &&
+          typeof p.stockQty === "number" &&
+          typeof p.createdAt === "string" &&
+          typeof p.updatedAt === "string" &&
+          typeof p.category === "object" &&
+          typeof p.category.id === "string" &&
+          typeof p.category.name === "string" &&
+          typeof p.category.slug === "string"
+        );
+      },
+    });
+
+    check(response, {
+      "productsByCategory: all products belong to requested category": (r) => {
+        const products = r.parsed?.data?.productsByCategory?.products;
+        if (!products || !Array.isArray(products) || products.length === 0) {
+          return false;
+        }
+        return products.every(
+          (p) => p && p.category && p.category.id === variables.categoryId
         );
       },
     });

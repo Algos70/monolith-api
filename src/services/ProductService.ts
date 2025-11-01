@@ -52,6 +52,12 @@ interface ProductReturn {
   product: Product;
 }
 
+interface ProductsReturn {
+  success: boolean;
+  message: string;
+  products: Product[];
+}
+
 export class ProductService {
   private productRepository: ProductRepository;
   private categoryRepository: CategoryRepository;
@@ -113,8 +119,33 @@ export class ProductService {
     ttl: 120, // 2 minutes
     keyGenerator: (categoryId: string) => `products:v1:category:${categoryId}`,
   })
-  async findByCategoryId(categoryId: string): Promise<Product[]> {
-    return await this.productRepository.findByCategoryId(categoryId);
+  async findByCategoryId(categoryId: string): Promise<ProductsReturn> {
+    try {
+      // Validate categoryId parameter
+      if (!categoryId || typeof categoryId !== "string" || categoryId.trim().length === 0) {
+        return {
+          success: false,
+          message: "Invalid category ID parameter",
+          products: [],
+        };
+      }
+
+      const normalizedCategoryId = categoryId.trim();
+      const products = await this.productRepository.findByCategoryId(normalizedCategoryId);
+      
+      return {
+        success: true,
+        message: `Found ${products.length} products in category`,
+        products: products,
+      };
+    } catch (error) {
+      console.error("Error in ProductService.findByCategoryId:", error);
+      return {
+        success: false,
+        message: "Error retrieving products by category",
+        products: [],
+      };
+    }
   }
 
   // İsme göre ürün ara

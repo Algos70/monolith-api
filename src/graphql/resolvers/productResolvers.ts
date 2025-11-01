@@ -40,12 +40,7 @@ export class ProductResolvers {
     { categoryId }: any,
     context: GraphQLContext
   ) {
-    try {
-      return await productService.findByCategoryId(categoryId);
-    } catch (error) {
-      console.error("GraphQL productsByCategory error:", error);
-      throw new Error("Failed to fetch products by category");
-    }
+    return await productService.findByCategoryId(categoryId);
   }
 
   @RequirePermission("products_read")
@@ -59,7 +54,7 @@ export class ProductResolvers {
       if (!productResult.success || !productResult.product) {
         throw new UserInputError("Product not found");
       }
-      
+
       const inStock = await productService.isInStock(id, qty);
 
       return {

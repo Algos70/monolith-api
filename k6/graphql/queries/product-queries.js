@@ -81,18 +81,22 @@ export const PRODUCT_QUERIES = {
   GET_PRODUCTS_BY_CATEGORY: `
     query GetProductsByCategory($categoryId: ID!) {
       productsByCategory(categoryId: $categoryId) {
-        id
-        name
-        slug
-        priceMinor
-        currency
-        stockQty
-        createdAt
-        updatedAt
-        category {
+        success
+        message
+        products {
           id
           name
           slug
+          priceMinor
+          currency
+          stockQty
+          createdAt
+          updatedAt
+          category {
+            id
+            name
+            slug
+          }
         }
       }
     }

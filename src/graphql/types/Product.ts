@@ -51,6 +51,12 @@ export const productTypeDefs = `
     product: Product
   }
 
+  type ProductsResult {
+    success: Boolean!
+    message: String!
+    products: [Product!]!
+  }
+
   type StockCheckResult {
     inStock: Boolean!
     requiredQty: Int!
@@ -87,7 +93,7 @@ export const productTypeDefs = `
     ): ProductConnection!
     product(id: ID!): ProductResult!
     productBySlug(slug: String!): ProductResult!
-    productsByCategory(categoryId: ID!): [Product!]!
+    productsByCategory(categoryId: ID!): ProductsResult!
     productAvailability(id: ID!, qty: Int = 1): ProductAvailability!
     featuredProducts(limit: Int = 8): ProductConnection!
     searchProducts(
