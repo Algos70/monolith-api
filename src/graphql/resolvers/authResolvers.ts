@@ -42,7 +42,7 @@ export const authResolvers = {
         }
 
         const config = getKeycloakConfig();
-        
+
         if (!config.clientSecret) {
           throw new Error("Server configuration error: Missing client secret");
         }
@@ -72,7 +72,6 @@ export const authResolvers = {
           user: sanitizedUser,
         };
       } catch (error: any) {
-
         if (error.message.includes("Invalid username or password")) {
           throw new AuthenticationError(error.message);
         }
@@ -153,7 +152,7 @@ export const authResolvers = {
         });
 
         const result = await authService.logoutUser(
-          user?.refresh_token,
+          undefined, // No refresh token needed for session-based auth
           config.clientSecret
             ? { clientId: config.clientId, clientSecret: config.clientSecret }
             : undefined
@@ -170,50 +169,6 @@ export const authResolvers = {
           success: true,
           message: "Logged out successfully",
         };
-      }
-    },
-
-    // Refresh token mutation
-    refreshToken: async (_: any, __: any, context: GraphQLContext) => {
-      try {
-        const user = SessionService.getUser(context.req);
-
-        if (!user?.refresh_token) {
-          throw new AuthenticationError("No refresh token available");
-        }
-
-        // Use AuthService for token refresh
-        const authService = new AuthService({
-          keycloakBaseUrl:
-            process.env.KEYCLOAK_BASE_URL || "http://localhost:8080",
-          keycloakRealm: process.env.KEYCLOAK_REALM || "shop",
-          publicClientId: process.env.KEYCLOAK_CLIENT_ID || "monolith-api",
-          frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
-        });
-
-        const result = await authService.refreshUserToken(user.refresh_token);
-
-        // Update session with new tokens
-        const updatedUser = {
-          ...user,
-          ...result.user,
-        };
-        SessionService.storeUser(context.req, updatedUser);
-
-        // Return success response (without sensitive tokens)
-        const { access_token, refresh_token, id_token, ...sanitizedUser } =
-          updatedUser;
-
-        return {
-          success: true,
-          message: "Token refreshed successfully",
-          user: sanitizedUser,
-        };
-      } catch (error) {
-        console.error("GraphQL Token refresh error:", error);
-        // Clear invalid session
-        context.req.session.destroy(() => {});
-        throw new AuthenticationError("Token refresh failed");
       }
     },
   },

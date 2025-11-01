@@ -146,7 +146,7 @@ router.post("/logout", async (req: Request, res: Response) => {
     });
 
     const result = await authService.logoutUser(
-      user?.refresh_token,
+      undefined, // No refresh token needed for session-based auth
       config.clientSecret ? { clientId: config.clientId, clientSecret: config.clientSecret } : undefined
     );
 
@@ -176,42 +176,6 @@ router.get("/me", (req: Request, res: Response) => {
   res.json(sanitizedUser);
 });
 
-// Refresh token endpoint
-router.post("/refresh", async (req: Request, res: Response) => {
-  try {
-    const user = SessionService.getUser(req);
 
-    if (!user?.refresh_token) {
-      return res.status(401).json({ error: "No refresh token available" });
-    }
-
-    // Use AuthService for token refresh
-    const authService = new AuthService({
-      keycloakBaseUrl: process.env.KEYCLOAK_BASE_URL || "http://localhost:8080",
-      keycloakRealm: process.env.KEYCLOAK_REALM || "shop",
-      publicClientId: process.env.KEYCLOAK_CLIENT_ID || "monolith-api",
-      frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
-    });
-
-    const result = await authService.refreshUserToken(user.refresh_token);
-
-    // Update session with new tokens
-    const updatedUser = {
-      ...user,
-      ...result.user,
-    };
-    SessionService.storeUser(req, updatedUser);
-
-    res.json({
-      success: true,
-      message: "Token refreshed successfully",
-    });
-  } catch (error) {
-    console.error("Token refresh error:", error);
-    // Clear invalid session
-    req.session.destroy(() => {});
-    res.status(401).json({ error: "Token refresh failed" });
-  }
-});
 
 export default router;

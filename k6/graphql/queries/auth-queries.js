@@ -53,23 +53,5 @@ export const AUTH_QUERIES = {
     }
   `,
 
-  REFRESH_TOKEN: `
-    mutation RefreshToken {
-      refreshToken {
-        success
-        message
-        user {
-          sub
-          email
-          preferred_username
-          name
-          given_name
-          family_name
-          email_verified
-          permissions
-          dbUserId
-        }
-      }
-    }
-  `,
+
 };
