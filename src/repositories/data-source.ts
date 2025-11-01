@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
+import { join } from "path";
 import { entities } from "../entities";
 
 export const AppDataSource = new DataSource({
@@ -14,7 +15,7 @@ export const AppDataSource = new DataSource({
   entities: entities,
   migrations: [
     process.env.NODE_ENV === "production"
-      ? "dist/migrations/*.js"
-      : "migrations/*.ts",
+      ? join(__dirname, "../migrations/*.js") // ✅ doğru relative path
+      : join(__dirname, "../../migrations/*.ts"), // ✅ dev ortam için
   ],
 });
