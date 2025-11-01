@@ -43,34 +43,7 @@ export class ProductResolvers {
     return await productService.findByCategoryId(categoryId);
   }
 
-  @RequirePermission("products_read")
-  async productAvailability(
-    _: any,
-    { id, qty = 1 }: any,
-    context: GraphQLContext
-  ) {
-    try {
-      const productResult = await productService.getProductForAdmin(id);
-      if (!productResult.success || !productResult.product) {
-        throw new UserInputError("Product not found");
-      }
 
-      const inStock = await productService.isInStock(id, qty);
-
-      return {
-        productId: id,
-        available: inStock,
-        requiredQty: qty,
-        stockQty: productResult.product.stockQty,
-      };
-    } catch (error) {
-      console.error("GraphQL productAvailability error:", error);
-      if (error instanceof UserInputError) {
-        throw error;
-      }
-      throw new Error("Failed to check product availability");
-    }
-  }
 
   @RequirePermission("products_read")
   async featuredProducts(_: any, { limit = 8 }: any, context: GraphQLContext) {
@@ -120,9 +93,7 @@ export const productResolvers = {
     productsByCategory: productResolversInstance.productsByCategory.bind(
       productResolversInstance
     ),
-    productAvailability: productResolversInstance.productAvailability.bind(
-      productResolversInstance
-    ),
+
     featuredProducts: productResolversInstance.featuredProducts.bind(
       productResolversInstance
     ),

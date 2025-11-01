@@ -102,16 +102,7 @@ export const PRODUCT_QUERIES = {
     }
   `,
 
-  CHECK_PRODUCT_AVAILABILITY: `
-    query CheckProductAvailability($id: ID!, $qty: Int) {
-      productAvailability(id: $id, qty: $qty) {
-        productId
-        available
-        requiredQty
-        stockQty
-      }
-    }
-  `,
+
 
   GET_FEATURED_PRODUCTS: `
     query GetFeaturedProducts($limit: Int) {

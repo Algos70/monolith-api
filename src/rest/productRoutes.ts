@@ -91,33 +91,7 @@ router.get(
   }
 });
 
-// GET /products/:id/availability - Check product availability
-router.get(
-  "/:id/availability",
-  rateLimitMiddleware.createCatalogRateLimit(),
-  requireProductsReadPermission,
-  async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const requiredQty = parseInt(req.query.qty as string) || 1;
 
-    const product = await productService.getProductForAdmin(id);
-    const inStock = await productService.isInStock(id, requiredQty);
-    
-    res.json({
-      productId: id,
-      available: inStock,
-      requiredQty,
-      stockQty: product.product.stockQty,
-    });
-  } catch (error) {
-    console.error("Product availability check error:", error);
-    if (error instanceof Error && error.message === "Product not found") {
-      return res.status(404).json({ error: error.message });
-    }
-    res.status(500).json({ error: "Failed to check product availability" });
-  }
-});
 
 // GET /products/featured - Get featured products
 router.get(

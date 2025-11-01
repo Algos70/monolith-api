@@ -62,12 +62,7 @@ export const productTypeDefs = `
     requiredQty: Int!
   }
 
-  type ProductAvailability {
-    productId: ID!
-    available: Boolean!
-    requiredQty: Int!
-    stockQty: Int!
-  }
+
 
   extend type Query {
     # Admin queries
@@ -94,7 +89,7 @@ export const productTypeDefs = `
     product(id: ID!): ProductResult!
     productBySlug(slug: String!): ProductResult!
     productsByCategory(categoryId: ID!): ProductsResult!
-    productAvailability(id: ID!, qty: Int = 1): ProductAvailability!
+
     featuredProducts(limit: Int = 8): ProductConnection!
     searchProducts(
       search: String
