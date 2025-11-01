@@ -11,6 +11,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set lowercase owner
+        id: vars
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
     services:
       postgres:
         image: postgres:18
@@ -44,8 +52,7 @@ jobs:
           POSTGRES_PASSWORD: keycloak
 
       keycloak:
-        image: ghcr.io/${{ github.repository_owner,, }}/keycloak-shop:latest
-
+        image: ghcr.io/${{ env.OWNER_LC }}/keycloak-shop:latest
         env:
           KEYCLOAK_ADMIN: admin
           KEYCLOAK_ADMIN_PASSWORD: admin
