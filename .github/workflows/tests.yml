@@ -17,7 +17,14 @@ jobs:
         run: |
           docker compose version
           docker version
-
+      
+      - name: Debug logs if healthcheck fails
+        if: failure()
+        run: |
+          echo "🔍 Monolith API logs:"
+          docker compose logs monolith-api
+          echo "🔍 Keycloak logs:"
+          docker compose logs keycloak
       - name: Build and start all services
         run: |
           docker compose up -d --build
