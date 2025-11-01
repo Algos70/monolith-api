@@ -3,7 +3,7 @@ import { OrderRepository } from "../repositories/OrderRepository";
 import { CartService } from "./CartService";
 import { WalletService } from "./WalletService";
 import { ProductService } from "./ProductService";
-import { AppDataSource } from "../data-source";
+import { AppDataSource } from "../repositories/data-source";
 
 export interface CreateOrderData {
   userId: string;

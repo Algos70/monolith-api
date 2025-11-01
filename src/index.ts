@@ -6,7 +6,7 @@ import RedisStore from "connect-redis";
 import { config } from "dotenv";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express5";
-import { AppDataSource } from "./data-source";
+import { AppDataSource } from "./repositories/data-source";
 import { RedisClient } from "./cache/RedisClient";
 import { verifyBearer, requireBearerRoles } from "./auth/middleware";
 import {
@@ -28,6 +28,7 @@ import { typeDefs, resolvers } from "./graphql";
 import { rateLimitMiddleware } from "./cache/RateLimitMiddleware";
 import { createGraphQLRateLimitPlugin } from "./graphql/plugins/rateLimitPlugin";
 import { formatError } from "./graphql/utils/errorFormatter";
+import { DatabaseSeeder } from "./repositories/seeds";
 
 config();
 
@@ -84,6 +85,9 @@ const startServer = async () => {
     console.log("🔄 Running database migrations...");
     await AppDataSource.runMigrations();
     console.log("✅ Database migrations completed successfully");
+
+    // Run database seeding (only once)
+    await DatabaseSeeder.run();
 
     // Initialize Redis connection
     const redis = RedisClient.getInstance();

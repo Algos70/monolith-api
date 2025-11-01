@@ -1,5 +1,5 @@
 import { Repository } from "typeorm";
-import { AppDataSource } from "../data-source";
+import { AppDataSource } from "./data-source";
 import { Wallet } from "../entities/Wallet";
 
 export class WalletRepository {
