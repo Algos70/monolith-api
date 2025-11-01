@@ -1,5 +1,5 @@
 import { ProductService } from "../../services/ProductService";
-import { UserInputError, type GraphQLContext } from "../utils/permissions";
+import { type GraphQLContext } from "../utils/permissions";
 import { RequirePermission } from "../decorators/permissions";
 
 const productService = new ProductService();

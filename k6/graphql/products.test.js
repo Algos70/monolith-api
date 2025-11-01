@@ -29,7 +29,13 @@ export default async function () {
   });
 
   // Test 4: Get products by category id
-  await productService.getProductsByCategory({ categoryId: "02f94490-358e-4de6-a725-67bed187a89f"})
+  await productService.getProductsByCategory({
+    categoryId: "02f94490-358e-4de6-a725-67bed187a89f",
+  });
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
+
+  // Test 5: Get featured products 
+  await productService.getFeaturedProducts({ limit: 8 });
 
   console.log("\n✅ Product User Tests Completed");
 }

@@ -91,8 +91,6 @@ export class ProductService {
       },
     });
 
-    console.log("byslug: ", response);
-
     return response;
   }
 
@@ -141,8 +139,6 @@ export class ProductService {
       this.sessionHeaders
     );
 
-    console.log("response: ", response);
-
     check(response, {
       "productsByCategory: response parsed": (r) => r.parsed !== null,
       "productsByCategory: success true": (r) =>
@@ -188,6 +184,71 @@ export class ProductService {
         return products.every(
           (p) => p && p.category && p.category.id === variables.categoryId
         );
+      },
+    });
+
+    return response;
+  }
+
+  async getFeaturedProducts(variables = {}) {
+    const response = this.client.requestWithParsing(
+      PRODUCT_QUERIES.GET_FEATURED_PRODUCTS,
+      variables,
+      this.sessionHeaders
+    );
+
+    check(response, {
+      "featuredProducts: response parsed": (r) => r.parsed !== null,
+      "featuredProducts: success true": (r) =>
+        r.parsed?.data?.featuredProducts?.success === true,
+      "featuredProducts: message is correct": (r) =>
+        r.parsed?.data?.featuredProducts?.message === "Products are sent",
+    });
+
+    check(response, {
+      "featuredProducts: pagination total is 12": (r) =>
+        r.parsed?.data?.featuredProducts?.pagination?.total === 12,
+      "featuredProducts: pagination limit is 8": (r) =>
+        r.parsed?.data?.featuredProducts?.pagination?.limit === 8,
+      "featuredProducts: pagination total pages is 2": (r) =>
+        r.parsed?.data?.featuredProducts?.pagination?.totalPages === 2,
+    });
+
+    check(response, {
+      "featuredProducts: products array exists": (r) =>
+        Array.isArray(r.parsed?.data?.featuredProducts?.products),
+      "featuredProducts: has 8 products": (r) =>
+        r.parsed?.data?.featuredProducts?.products?.length === 8,
+    });
+
+    check(response, {
+      "featuredProducts: data fields are correct": (r) => {
+        const p = r.parsed?.data?.featuredProducts?.products?.[0];
+        return (
+          p &&
+          typeof p.id === "string" &&
+          typeof p.name === "string" &&
+          typeof p.slug === "string" &&
+          typeof p.priceMinor === "number" &&
+          typeof p.currency === "string" &&
+          typeof p.stockQty === "number" &&
+          typeof p.createdAt === "string" &&
+          typeof p.updatedAt === "string" &&
+          typeof p.category === "object" &&
+          typeof p.category.id === "string" &&
+          typeof p.category.name === "string" &&
+          typeof p.category.slug === "string"
+        );
+      },
+    });
+
+    check(response, {
+      "featuredProducts: all products are in stock": (r) => {
+        const products = r.parsed?.data?.featuredProducts?.products;
+        if (!products || !Array.isArray(products) || products.length === 0) {
+          return false;
+        }
+        return products.every((p) => p && p.stockQty > 0);
       },
     });
 
