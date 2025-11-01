@@ -1,96 +1,45 @@
-name: API & Integration Tests
+name: API & Integration Tests (Compose)
 
 on:
   push:
-    branches:
-      - dev
-      - main
+    branches: [ dev, main ]
   pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:18
-        env:
-          POSTGRES_USER: app
-          POSTGRES_PASSWORD: app
-          POSTGRES_DB: shop
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U app -d shop"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
-      keycloak-db:
-        image: postgres:18
-        env:
-          POSTGRES_DB: keycloak
-          POSTGRES_USER: keycloak
-          POSTGRES_PASSWORD: keycloak
-
-      keycloak:
-        image: ghcr.io/algos70/keycloak-shop:latest
-        env:
-          KEYCLOAK_ADMIN: admin
-          KEYCLOAK_ADMIN_PASSWORD: admin
-          KC_DB: postgres
-          KC_DB_URL_HOST: keycloak-db
-          KC_DB_URL_DATABASE: keycloak
-          KC_DB_USERNAME: keycloak
-          KC_DB_PASSWORD: keycloak
-          KC_HOSTNAME: localhost
-          KC_PROXY: edge
-        ports:
-          - 8080:8080
-
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build monolith-api
-        run: npm run build
-
-      - name: Start backend server
+      - name: Set up Docker Compose
         run: |
-          nohup npm start &
-          npx wait-on --timeout 60000 --interval 2000 http://localhost:4000/api/health
+          docker compose version
+          docker version
 
-      - name: Run integration + API tests
-        env:
-          NODE_ENV: production
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_USERNAME: app
-          DB_PASSWORD: app
-          DB_DATABASE: shop
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
-          KEYCLOAK_BASE_URL: http://localhost:8080/
-          KEYCLOAK_REALM: shop
-          KEYCLOAK_CLIENT_ID: monolith-api
-          KEYCLOAK_CLIENT_SECRET: nonDohtDwCWJAy5IUSszZ7Ac7SXoOYsb
-          FRONTEND_URL: http://localhost:3000
-        run: npm run test:integration
+      - name: Build and start all services
+        run: |
+          docker compose up -d --build
+          echo "⏳ waiting for API health..."
+          for i in {1..30}; do
+            if curl -fs http://localhost:4000/health > /dev/null; then
+              echo "✅ API is healthy"
+              break
+            fi
+            echo "still waiting... ($i/30)"
+            sleep 5
+          done
+
+      - name: Run integration tests
+        run: |
+          npm ci
+          npm run test:integration
+
+      - name: Show logs if failed
+        if: failure()
+        run: docker compose logs monolith-api
+
+      - name: Shut down services
+        if: always()
+        run: docker compose down -v
