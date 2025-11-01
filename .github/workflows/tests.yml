@@ -18,25 +18,17 @@ jobs:
           docker compose version
           docker version
       
+      
+      - name: Build and start all services
+        run: |
+          docker compose up -d --build
+
       - name: Debug logs if healthcheck fails
-        if: failure()
         run: |
           echo "🔍 Monolith API logs:"
           docker compose logs monolith-api
           echo "🔍 Keycloak logs:"
           docker compose logs keycloak
-      - name: Build and start all services
-        run: |
-          docker compose up -d --build
-          echo "⏳ waiting for API health..."
-          for i in {1..30}; do
-            if curl -fs http://localhost:4000/health > /dev/null; then
-              echo "✅ API is healthy"
-              break
-            fi
-            echo "still waiting... ($i/30)"
-            sleep 5
-          done
 
       - name: Run integration tests
         run: |
