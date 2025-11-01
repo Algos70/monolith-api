@@ -3,6 +3,8 @@ export const PRODUCT_QUERIES = {
   GET_PRODUCTS: `
     query GetProducts($page: Int, $limit: Int, $search: String, $categoryId: ID, $inStockOnly: Boolean) {
       products(page: $page, limit: $limit, search: $search, categoryId: $categoryId, inStockOnly: $inStockOnly) {
+        success
+        message
         products {
           id
           name
@@ -51,18 +53,22 @@ export const PRODUCT_QUERIES = {
   GET_PRODUCT_BY_SLUG: `
     query GetProductBySlug($slug: String!) {
       productBySlug(slug: $slug) {
-        id
-        name
-        slug
-        priceMinor
-        currency
-        stockQty
-        createdAt
-        updatedAt
-        category {
+        success
+        message
+        product {
           id
           name
           slug
+          priceMinor
+          currency
+          stockQty
+          createdAt
+          updatedAt
+          category {
+            id
+            name
+            slug
+          }
         }
       }
     }
@@ -102,6 +108,8 @@ export const PRODUCT_QUERIES = {
   GET_FEATURED_PRODUCTS: `
     query GetFeaturedProducts($limit: Int) {
       featuredProducts(limit: $limit) {
+        success
+        message
         products {
           id
           name
@@ -130,6 +138,8 @@ export const PRODUCT_QUERIES = {
   SEARCH_PRODUCTS: `
     query SearchProducts($search: String, $categoryId: ID, $inStockOnly: Boolean, $page: Int, $limit: Int) {
       searchProducts(search: $search, categoryId: $categoryId, inStockOnly: $inStockOnly, page: $page, limit: $limit) {
+        success
+        message
         products {
           id
           name

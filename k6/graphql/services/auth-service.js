@@ -53,7 +53,6 @@ export class AuthService {
 
     // Extract session cookie
     this.sessionCookie = extractSessionCookie(response);
-    console.log("session:", this.sessionCookie)
     const success = check(response, {
     'login: response parsed': (r) => r.parsed !== null,
     'login: success true': (r) => r.parsed?.data?.login?.success === true,

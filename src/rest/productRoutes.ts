@@ -108,7 +108,7 @@ router.get(
       productId: id,
       available: inStock,
       requiredQty,
-      stockQty: product.stockQty,
+      stockQty: product.product.stockQty,
     });
   } catch (error) {
     console.error("Product availability check error:", error);

@@ -21,38 +21,17 @@ export class ProductResolvers {
       });
     } catch (error) {
       console.error("GraphQL products error:", error);
-      throw new Error("Failed to fetch products");
     }
   }
 
   @RequirePermission("products_read")
   async product(_: any, { id }: any, context: GraphQLContext) {
-    try {
-      return await productService.getProductForAdmin(id);
-    } catch (error) {
-      console.error("GraphQL product error:", error);
-      if (error instanceof Error && error.message === "Product not found") {
-        throw new UserInputError(error.message);
-      }
-      throw new Error("Failed to fetch product");
-    }
+    return await productService.getProductForAdmin(id);
   }
 
   @RequirePermission("products_read")
   async productBySlug(_: any, { slug }: any, context: GraphQLContext) {
-    try {
-      const product = await productService.findBySlug(slug);
-      if (!product) {
-        throw new UserInputError("Product not found");
-      }
-      return product;
-    } catch (error) {
-      console.error("GraphQL productBySlug error:", error);
-      if (error instanceof UserInputError) {
-        throw error;
-      }
-      throw new Error("Failed to fetch product");
-    }
+    return await productService.findBySlug(slug);
   }
 
   @RequirePermission("products_read")
@@ -76,19 +55,23 @@ export class ProductResolvers {
     context: GraphQLContext
   ) {
     try {
-      const product = await productService.getProductForAdmin(id);
+      const productResult = await productService.getProductForAdmin(id);
+      if (!productResult.success || !productResult.product) {
+        throw new UserInputError("Product not found");
+      }
+      
       const inStock = await productService.isInStock(id, qty);
 
       return {
         productId: id,
         available: inStock,
         requiredQty: qty,
-        stockQty: product.stockQty,
+        stockQty: productResult.product.stockQty,
       };
     } catch (error) {
       console.error("GraphQL productAvailability error:", error);
-      if (error instanceof Error && error.message === "Product not found") {
-        throw new UserInputError(error.message);
+      if (error instanceof UserInputError) {
+        throw error;
       }
       throw new Error("Failed to check product availability");
     }

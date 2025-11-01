@@ -35,6 +35,8 @@ export interface ProductListOptions {
 }
 
 export interface ProductListResult {
+  success: boolean;
+  message: string;
   products: Product[];
   pagination: {
     page: number;
@@ -42,6 +44,12 @@ export interface ProductListResult {
     total: number;
     totalPages: number;
   };
+}
+
+interface ProductReturn {
+  success: boolean;
+  message: string;
+  product: Product;
 }
 
 export class ProductService {
@@ -59,30 +67,51 @@ export class ProductService {
   }
 
   // Slug ile ürün bul
-  @Cache({ 
+  @Cache({
     ttl: 180, // 3 minutes
-    keyGenerator: (slug: string) => `product:v1:${slug}`
+    keyGenerator: (slug: string) => `product:v1:${slug}`,
   })
-  async findBySlug(slug: string): Promise<Product | null> {
+  async findBySlug(slug: string): Promise<ProductReturn> {
     try {
       // Validate slug parameter
-      if (!slug || typeof slug !== 'string' || slug.trim().length === 0) {
-        return null;
+      if (!slug || typeof slug !== "string" || slug.trim().length === 0) {
+        return {
+          success: false,
+          message: "Invalid slug parameter",
+          product: null as any,
+        };
       }
 
       const normalizedSlug = slug.trim();
-      return await this.productRepository.findBySlug(normalizedSlug);
+      const product = await this.productRepository.findBySlug(normalizedSlug);
+      
+      if (!product) {
+        return {
+          success: false,
+          message: "Product not found",
+          product: null as any,
+        };
+      }
+
+      return {
+        success: true,
+        message: "Product fetched successfully",
+        product: product,
+      };
     } catch (error) {
-      console.error('Error in ProductService.findBySlug:', error);
-      // Return null instead of throwing to prevent internal server errors
-      return null;
+      console.error("Error in ProductService.findBySlug:", error);
+      return {
+        success: false,
+        message: "Error retrieving product",
+        product: null as any,
+      };
     }
   }
 
   // Kategori ID'sine göre ürünleri bul
-  @Cache({ 
+  @Cache({
     ttl: 120, // 2 minutes
-    keyGenerator: (categoryId: string) => `products:v1:category:${categoryId}`
+    keyGenerator: (categoryId: string) => `products:v1:category:${categoryId}`,
   })
   async findByCategoryId(categoryId: string): Promise<Product[]> {
     return await this.productRepository.findByCategoryId(categoryId);
@@ -100,23 +129,38 @@ export class ProductService {
 
   // Validate product data
   private validateProductData(productData: Partial<CreateProductData>): void {
-    if (productData.name !== undefined && (!productData.name || productData.name.trim().length === 0)) {
-      const error = new Error("Name is required and cannot be empty") as ProductValidationError;
+    if (
+      productData.name !== undefined &&
+      (!productData.name || productData.name.trim().length === 0)
+    ) {
+      const error = new Error(
+        "Name is required and cannot be empty"
+      ) as ProductValidationError;
       error.field = "name";
       error.code = "REQUIRED";
       throw error;
     }
 
-    if (productData.slug !== undefined && (!productData.slug || productData.slug.trim().length === 0)) {
-      const error = new Error("Slug is required and cannot be empty") as ProductValidationError;
+    if (
+      productData.slug !== undefined &&
+      (!productData.slug || productData.slug.trim().length === 0)
+    ) {
+      const error = new Error(
+        "Slug is required and cannot be empty"
+      ) as ProductValidationError;
       error.field = "slug";
       error.code = "REQUIRED";
       throw error;
     }
 
     if (productData.priceMinor !== undefined) {
-      if (typeof productData.priceMinor !== "number" || productData.priceMinor < 0) {
-        const error = new Error("priceMinor must be a non-negative number") as ProductValidationError;
+      if (
+        typeof productData.priceMinor !== "number" ||
+        productData.priceMinor < 0
+      ) {
+        const error = new Error(
+          "priceMinor must be a non-negative number"
+        ) as ProductValidationError;
         error.field = "priceMinor";
         error.code = "INVALID_TYPE";
         throw error;
@@ -124,8 +168,13 @@ export class ProductService {
     }
 
     if (productData.stockQty !== undefined) {
-      if (typeof productData.stockQty !== "number" || productData.stockQty < 0) {
-        const error = new Error("stockQty must be a non-negative number") as ProductValidationError;
+      if (
+        typeof productData.stockQty !== "number" ||
+        productData.stockQty < 0
+      ) {
+        const error = new Error(
+          "stockQty must be a non-negative number"
+        ) as ProductValidationError;
         error.field = "stockQty";
         error.code = "INVALID_TYPE";
         throw error;
@@ -134,7 +183,9 @@ export class ProductService {
 
     if (productData.currency !== undefined) {
       if (!productData.currency || productData.currency.length !== 3) {
-        const error = new Error("currency must be a 3-character code") as ProductValidationError;
+        const error = new Error(
+          "currency must be a 3-character code"
+        ) as ProductValidationError;
         error.field = "currency";
         error.code = "INVALID_FORMAT";
         throw error;
@@ -145,7 +196,9 @@ export class ProductService {
   // Validate stock quantity
   private validateStockQuantity(qty: number): void {
     if (!qty || typeof qty !== "number" || qty <= 0) {
-      const error = new Error("qty must be a positive number") as ProductValidationError;
+      const error = new Error(
+        "qty must be a positive number"
+      ) as ProductValidationError;
       error.field = "qty";
       error.code = "INVALID_TYPE";
       throw error;
@@ -153,11 +206,8 @@ export class ProductService {
   }
 
   // Yeni ürün oluştur
-  @InvalidateCache({ 
-    patterns: [
-      'products:v1:*',
-      'product:v1:*'
-    ]
+  @InvalidateCache({
+    patterns: ["products:v1:*", "product:v1:*"],
   })
   async createProduct(productData: CreateProductData): Promise<Product> {
     // Validate input data
@@ -172,16 +222,20 @@ export class ProductService {
     };
 
     // Slug benzersizliği kontrolü
-    const existingProduct = await this.findBySlug(normalizedData.slug);
-    if (existingProduct) {
-      const error = new Error("Product with this slug already exists") as ProductValidationError;
+    const existingProductResult = await this.findBySlug(normalizedData.slug);
+    if (existingProductResult.success && existingProductResult.product) {
+      const error = new Error(
+        "Product with this slug already exists"
+      ) as ProductValidationError;
       error.field = "slug";
       error.code = "DUPLICATE";
       throw error;
     }
 
     // Kategori varlığı kontrolü
-    const category = await this.categoryRepository.findById(normalizedData.categoryId);
+    const category = await this.categoryRepository.findById(
+      normalizedData.categoryId
+    );
     if (!category) {
       const error = new Error("Category not found") as ProductValidationError;
       error.field = "categoryId";
@@ -197,11 +251,8 @@ export class ProductService {
   }
 
   // Ürün bilgilerini güncelle
-  @InvalidateCache({ 
-    patterns: [
-      'products:v1:*',
-      'product:v1:*'
-    ]
+  @InvalidateCache({
+    patterns: ["products:v1:*", "product:v1:*"],
   })
   async updateProduct(
     id: string,
@@ -217,11 +268,16 @@ export class ProductService {
 
     // Validate only provided fields
     const fieldsToValidate: Partial<CreateProductData> = {};
-    if (productData.name !== undefined) fieldsToValidate.name = productData.name;
-    if (productData.slug !== undefined) fieldsToValidate.slug = productData.slug;
-    if (productData.priceMinor !== undefined) fieldsToValidate.priceMinor = productData.priceMinor;
-    if (productData.currency !== undefined) fieldsToValidate.currency = productData.currency;
-    if (productData.stockQty !== undefined) fieldsToValidate.stockQty = productData.stockQty;
+    if (productData.name !== undefined)
+      fieldsToValidate.name = productData.name;
+    if (productData.slug !== undefined)
+      fieldsToValidate.slug = productData.slug;
+    if (productData.priceMinor !== undefined)
+      fieldsToValidate.priceMinor = productData.priceMinor;
+    if (productData.currency !== undefined)
+      fieldsToValidate.currency = productData.currency;
+    if (productData.stockQty !== undefined)
+      fieldsToValidate.stockQty = productData.stockQty;
 
     if (Object.keys(fieldsToValidate).length > 0) {
       this.validateProductData(fieldsToValidate);
@@ -241,9 +297,11 @@ export class ProductService {
 
     // Eğer slug güncelleniyorsa, benzersizlik kontrolü yap
     if (normalizedData.slug) {
-      const slugProduct = await this.findBySlug(normalizedData.slug);
-      if (slugProduct && slugProduct.id !== id) {
-        const error = new Error("Product with this slug already exists") as ProductValidationError;
+      const slugProductResult = await this.findBySlug(normalizedData.slug);
+      if (slugProductResult.success && slugProductResult.product && slugProductResult.product.id !== id) {
+        const error = new Error(
+          "Product with this slug already exists"
+        ) as ProductValidationError;
         error.field = "slug";
         error.code = "DUPLICATE";
         throw error;
@@ -253,7 +311,9 @@ export class ProductService {
     // Eğer kategori güncelleniyorsa, kategori varlığı kontrolü yap
     let updateFields: any = { ...normalizedData };
     if (normalizedData.categoryId) {
-      const category = await this.categoryRepository.findById(normalizedData.categoryId);
+      const category = await this.categoryRepository.findById(
+        normalizedData.categoryId
+      );
       if (!category) {
         const error = new Error("Category not found") as ProductValidationError;
         error.field = "categoryId";
@@ -273,11 +333,8 @@ export class ProductService {
   }
 
   // Ürünü sil
-  @InvalidateCache({ 
-    patterns: [
-      'products:v1:*',
-      'product:v1:*'
-    ]
+  @InvalidateCache({
+    patterns: ["products:v1:*", "product:v1:*"],
   })
   async deleteProduct(id: string): Promise<void> {
     const product = await this.findById(id);
@@ -289,23 +346,21 @@ export class ProductService {
   }
 
   // Stok azalt
-  @InvalidateCache({ 
-    patterns: [
-      'products:v1:*',
-      'product:v1:*'
-    ]
+  @InvalidateCache({
+    patterns: ["products:v1:*", "product:v1:*"],
   })
-  async decreaseStock(productId: string, qty: number, manager?: any): Promise<Product | null> {
+  async decreaseStock(
+    productId: string,
+    qty: number,
+    manager?: any
+  ): Promise<Product | null> {
     this.validateStockQuantity(qty);
     return await this.productRepository.decreaseStock(productId, qty, manager);
   }
 
   // Stok artır
-  @InvalidateCache({ 
-    patterns: [
-      'products:v1:*',
-      'product:v1:*'
-    ]
+  @InvalidateCache({
+    patterns: ["products:v1:*", "product:v1:*"],
   })
   async increaseStock(productId: string, qty: number): Promise<Product | null> {
     this.validateStockQuantity(qty);
@@ -313,15 +368,21 @@ export class ProductService {
   }
 
   // Fiyat güncelle
-  @InvalidateCache({ 
-    patterns: [
-      'products:v1:*',
-      'product:v1:*'
-    ]
+  @InvalidateCache({
+    patterns: ["products:v1:*", "product:v1:*"],
   })
-  async updatePrice(productId: string, newPriceMinor: number): Promise<Product | null> {
-    if (newPriceMinor === undefined || typeof newPriceMinor !== "number" || newPriceMinor < 0) {
-      const error = new Error("priceMinor must be a non-negative number") as ProductValidationError;
+  async updatePrice(
+    productId: string,
+    newPriceMinor: number
+  ): Promise<Product | null> {
+    if (
+      newPriceMinor === undefined ||
+      typeof newPriceMinor !== "number" ||
+      newPriceMinor < 0
+    ) {
+      const error = new Error(
+        "priceMinor must be a non-negative number"
+      ) as ProductValidationError;
       error.field = "priceMinor";
       error.code = "INVALID_TYPE";
       throw error;
@@ -338,76 +399,117 @@ export class ProductService {
   }
 
   // Stok kontrolü
-  async isInStock(productId: string, requiredQty: number = 1): Promise<boolean> {
+  async isInStock(
+    productId: string,
+    requiredQty: number = 1
+  ): Promise<boolean> {
     return await this.productRepository.isInStock(productId, requiredQty);
   }
 
   // Admin panel için ürün listesi (pagination ve search ile)
-  @Cache({ 
+  @Cache({
     ttl: 120, // 2 minutes
     keyGenerator: (options: ProductListOptions = {}) => {
-      const { page = 1, limit = 10, search = '', categoryId = '', inStockOnly = false } = options;
+      const {
+        page = 1,
+        limit = 10,
+        search = "",
+        categoryId = "",
+        inStockOnly = false,
+      } = options;
       // Boş değerleri kaldır, sadece var olanları ekle
       const parts = [`products:v1:list:${page}:${limit}`];
       if (search) parts.push(`search:${search}`);
       if (categoryId) parts.push(`cat:${categoryId}`);
-      if (inStockOnly) parts.push('instock');
-      return parts.join(':');
-    }
+      if (inStockOnly) parts.push("instock");
+      return parts.join(":");
+    },
   })
   async getProductsForAdmin(
     options: ProductListOptions = {}
   ): Promise<ProductListResult> {
-    const { page = 1, limit = 10, search, categoryId, inStockOnly } = options;
+    try {
+      const { page = 1, limit = 10, search, categoryId, inStockOnly } = options;
 
-    // Tüm ürünleri getir
-    let allProducts = await this.getAllProducts();
+      // Tüm ürünleri getir
+      let allProducts = await this.getAllProducts();
 
-    // Filtreler uygula
-    if (search) {
-      allProducts = allProducts.filter(
-        (product) =>
-          product.name.toLowerCase().includes(search.toLowerCase()) ||
-          product.slug.toLowerCase().includes(search.toLowerCase())
-      );
+      // Filtreler uygula
+      if (search) {
+        allProducts = allProducts.filter(
+          (product) =>
+            product.name.toLowerCase().includes(search.toLowerCase()) ||
+            product.slug.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+
+      if (categoryId) {
+        allProducts = allProducts.filter(
+          (product) => product.category.id === categoryId
+        );
+      }
+
+      if (inStockOnly) {
+        allProducts = allProducts.filter((product) => product.stockQty > 0);
+      }
+
+      // Pagination uygula
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedProducts = allProducts.slice(startIndex, endIndex);
+
+      return {
+        success: true,
+        message: "Products are sent",
+        products: paginatedProducts,
+        pagination: {
+          page,
+          limit,
+          total: allProducts.length,
+          totalPages: Math.ceil(allProducts.length / limit),
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Error retrieving products",
+        products: [],
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 0,
+        },
+      };
     }
-
-    if (categoryId) {
-      allProducts = allProducts.filter(
-        (product) => product.category.id === categoryId
-      );
-    }
-
-    if (inStockOnly) {
-      allProducts = allProducts.filter((product) => product.stockQty > 0);
-    }
-
-    // Pagination uygula
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedProducts = allProducts.slice(startIndex, endIndex);
-
-    return {
-      products: paginatedProducts,
-      pagination: {
-        page,
-        limit,
-        total: allProducts.length,
-        totalPages: Math.ceil(allProducts.length / limit),
-      },
-    };
   }
 
   // Admin panel için ürün detayı getirme
-  @Cache({ 
+  @Cache({
     ttl: 180, // 3 minutes
-    keyGenerator: (id: string) => `product:v1:admin:${id}`
+    keyGenerator: (id: string) => `product:v1:admin:${id}`,
   })
-  async getProductForAdmin(id: string): Promise<Product> {
-    const product = await this.findById(id);
-    if (!product) {
-      throw new Error("Product not found");
+  async getProductForAdmin(id: string): Promise<ProductReturn> {
+    try {
+      const product = await this.findById(id);
+      if (!product) {
+        return {
+          success: true,
+          message: "Product not found",
+          product: null as any,
+        };
+      }
+      return {
+        success: true,
+        message: "Product fetched succesfully",
+        product: product,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Error retrieving product",
+        product: null as any,
+      };
     }
-    return product;
   }
 }

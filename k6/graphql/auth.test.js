@@ -22,8 +22,6 @@ export default function () {
   authService.me();
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
-
-
   authService.logout();
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 

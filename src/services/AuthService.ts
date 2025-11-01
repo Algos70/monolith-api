@@ -310,6 +310,7 @@ export class AuthService {
       return {
         success: true,
         message: "Logged out successfully",
+        
       };
     } catch (error) {
       console.error("Logout error:", error);
@@ -319,29 +320,6 @@ export class AuthService {
         success: true,
         message: "Logged out successfully",
       };
-    }
-  }
-
-  // Refresh user tokens
-  async refreshUserToken(
-    refreshToken: string
-  ): Promise<{ success: boolean; message: string; user?: any }> {
-    try {
-      // Refresh token using confidential client
-      const tokenData = await this.refreshToken(refreshToken);
-
-      return {
-        success: true,
-        message: "Token refreshed successfully",
-        user: {
-          access_token: tokenData.access_token,
-          refresh_token: tokenData.refresh_token,
-          id_token: tokenData.id_token,
-        },
-      };
-    } catch (error) {
-      console.error("Token refresh error:", error);
-      throw new Error("Token refresh failed");
     }
   }
 

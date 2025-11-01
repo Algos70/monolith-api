@@ -2,7 +2,6 @@ import { sleep } from 'k6';
 import { ProductService } from './services/product-service.js';
 import { TEST_CONFIG } from './config/test-config.js';
 import { setupAuth } from './utils/test-base.js';
-import { resetTestResults, printTestSummary } from './utils/test-helpers.js';
 
 export const options = TEST_CONFIG.SMOKE_TEST_OPTIONS;
 
@@ -37,8 +36,6 @@ const SEEDED_DATA = {
 };
 
 export default function () {
-  // Reset test results for this run
-  resetTestResults();
   
   console.log('\n🛍️ Starting Product User Queries Tests');
   console.log('==========================================');
@@ -49,16 +46,11 @@ export default function () {
   const productService = new ProductService(undefined, sessionHeaders);
   
   // Test 1: Get All Products - Basic product listing without filters
-  
-  console.log("prods:", productService.getProducts())
+  productService.getProducts()
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
+  // Test 2: Get product by slug
+  let product = productService.getProductBySlug({ slug: "airpods-pro" });;
 
-  // Cleanup authentication (like pytest fixture teardown)
-  cleanup();
-
-  // Print detailed test summary
-  printTestSummary();
-  
-  console.log('\n✅ Product User Queries Tests Completed');
+  console.log('\n✅ Product User Tests Completed');
 }

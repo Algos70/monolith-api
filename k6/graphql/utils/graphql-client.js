@@ -23,13 +23,11 @@ export class GraphQLClient {
       return {
         data: parsed.data,
         errors: parsed.errors,
-        success: !parsed.errors || parsed.errors.length === 0,
       };
     } catch (e) {
       return {
         data: null,
         errors: [{ message: `Failed to parse response: ${e.message}` }],
-        success: false,
       };
     }
   }

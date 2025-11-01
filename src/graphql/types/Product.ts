@@ -39,8 +39,16 @@ export const productTypeDefs = `
   }
 
   type ProductConnection {
+    success: Boolean!
+    message: String!
     products: [Product!]!
     pagination: Pagination!
+  }
+
+  type ProductResult {
+    success: Boolean!
+    message: String!
+    product: Product
   }
 
   type StockCheckResult {
@@ -64,7 +72,7 @@ export const productTypeDefs = `
       categoryId: ID
       inStockOnly: Boolean
     ): ProductConnection!
-    adminProduct(id: ID!): Product
+    adminProduct(id: ID!): ProductResult!
     adminProductBySlug(slug: String!): Product
     adminProductsByCategory(categoryId: ID!): [Product!]!
     adminProductStockCheck(id: ID!, qty: Int = 1): StockCheckResult!
@@ -78,7 +86,7 @@ export const productTypeDefs = `
       inStockOnly: Boolean = true
     ): ProductConnection!
     product(id: ID!): Product!
-    productBySlug(slug: String!): Product!
+    productBySlug(slug: String!): ProductResult!
     productsByCategory(categoryId: ID!): [Product!]!
     productAvailability(id: ID!, qty: Int = 1): ProductAvailability!
     featuredProducts(limit: Int = 8): ProductConnection!
