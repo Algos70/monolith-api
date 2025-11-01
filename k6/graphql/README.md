@@ -24,6 +24,7 @@ k6/graphql/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - K6 installed on your system
 - GraphQL API running (default: http://localhost:4000/graphql)
 
@@ -43,11 +44,13 @@ k6 run --vus 10 --duration 30s k6/graphql/auth.test.js
 ## 🏗️ Creating New Entity Tests
 
 1. **Copy the template:**
+
    ```bash
    cp k6/graphql/templates/entity-test-template.js k6/graphql/products.test.js
    ```
 
 2. **Create queries file:**
+
    ```javascript
    // queries/product-queries.js
    export const PRODUCT_QUERIES = {
@@ -58,11 +61,12 @@ k6 run --vus 10 --duration 30s k6/graphql/auth.test.js
    ```
 
 3. **Create service file:**
+
    ```javascript
    // services/product-service.js
-   import { GraphQLClient } from '../utils/graphql-client.js';
-   import { PRODUCT_QUERIES } from '../queries/product-queries.js';
-   
+   import { GraphQLClient } from "../utils/graphql-client.js";
+   import { PRODUCT_QUERIES } from "../queries/product-queries.js";
+
    export class ProductService {
      // ... implement CRUD operations
    }
@@ -76,16 +80,19 @@ k6 run --vus 10 --duration 30s k6/graphql/auth.test.js
 ## 🧪 Test Types
 
 ### Smoke Tests (Default)
+
 - Single user, single iteration
 - Basic functionality validation
 - Quick feedback loop
 
 ### Load Tests
+
 ```javascript
 export const options = TEST_CONFIG.LOAD_TEST_OPTIONS;
 ```
 
 ### Stress Tests
+
 ```javascript
 export const options = TEST_CONFIG.STRESS_TEST_OPTIONS;
 ```
@@ -93,6 +100,7 @@ export const options = TEST_CONFIG.STRESS_TEST_OPTIONS;
 ## 🔧 Configuration
 
 Environment variables:
+
 - `BASE_URL`: GraphQL endpoint (default: http://localhost:4000/graphql)
 - `ADMIN_USERNAME`: Admin username for privileged tests
 - `ADMIN_PASSWORD`: Admin password for privileged tests
@@ -100,6 +108,7 @@ Environment variables:
 ## 📊 Test Patterns
 
 ### Authentication Flow
+
 ```javascript
 const authService = new AuthService();
 const { user } = authService.register();
@@ -109,6 +118,7 @@ authService.logout();
 ```
 
 ### Entity CRUD Operations
+
 ```javascript
 const entityService = new EntityService(authService.getSessionHeaders());
 const entity = entityService.create(testData);
@@ -129,6 +139,7 @@ entityService.delete(entity.id);
 ## 📈 Monitoring
 
 K6 provides built-in metrics:
+
 - `http_req_duration`: Request response time
 - `http_req_failed`: Failed request rate
 - `iterations`: Test iterations completed
@@ -143,6 +154,7 @@ Enable detailed logging by checking the console output in your test functions. E
 ## 🔄 CI/CD Integration
 
 Example GitHub Actions workflow:
+
 ```yaml
 - name: Run GraphQL Tests
   run: k6 run k6/graphql/auth.test.js

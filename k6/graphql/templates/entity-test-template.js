@@ -1,42 +1,43 @@
 import { sleep } from 'k6';
-import { AuthService } from '../services/auth-service.js';
 import { TEST_CONFIG } from '../config/test-config.js';
+import { setupAuth } from '../utils/test-base.js';
+// import { ENTITY_NAMEService } from '../services/ENTITY_NAME-service.js';
 
 export const options = TEST_CONFIG.SMOKE_TEST_OPTIONS;
 
 // Template for entity tests
 // Replace ENTITY_NAME with your actual entity (e.g., Product, Order, Category)
 export default function () {
-  const authService = new AuthService();
-
   console.log('\n🧪 Starting ENTITY_NAME Tests');
 
-  // Step 1: Authenticate (most entities require authentication)
-  const { user } = authService.register();
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
+  // Step 1: Setup Authentication (like pytest fixture)
+  const { user, sessionHeaders, cleanup } = setupAuth();
 
-  authService.login();
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
+  // Step 2: Create Entity Service with authenticated session
+  // const entityService = new ENTITY_NAMEService(undefined, sessionHeaders);
 
-  // Step 2: Create Entity Test
+  // Step 3: Create Entity Test
   // TODO: Implement create entity test
   console.log('📝 Testing ENTITY_NAME Creation...');
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
   
-  // Step 3: Read Entity Test
+  // Step 4: Read Entity Test
   // TODO: Implement read entity test
   console.log('📖 Testing ENTITY_NAME Reading...');
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
   
-  // Step 4: Update Entity Test
+  // Step 5: Update Entity Test
   // TODO: Implement update entity test
   console.log('✏️ Testing ENTITY_NAME Update...');
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
   
-  // Step 5: Delete Entity Test
+  // Step 6: Delete Entity Test
   // TODO: Implement delete entity test
   console.log('🗑️ Testing ENTITY_NAME Deletion...');
-
-  // Step 6: Cleanup - Logout
-  authService.logout();
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
+
+  // Step 7: Cleanup Authentication (like pytest fixture teardown)
+  cleanup();
 
   console.log('✅ ENTITY_NAME Tests Completed');
 }

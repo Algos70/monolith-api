@@ -1,5 +1,7 @@
 import { sleep } from 'k6';
 import { AuthService } from './services/auth-service.js';
+import { TEST_CONFIG } from './config/test-config.js';
+
 
 export const options = {
   vus: 1,
@@ -9,22 +11,22 @@ export const options = {
 export default function () {
   const authService = new AuthService();
 
-  console.log('\n🔐 Starting Authentication Flow Tests');
+  console.log('Starting Authentication Flow Tests');
   
   const { user } = authService.register();
-  sleep(1);
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
   authService.login();
-  sleep(1);
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
   authService.me();
-  sleep(1);
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
   authService.refreshToken();
-  sleep(1);
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
   authService.logout();
-  sleep(1);
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
-  console.log('\n✅ Authentication Flow Tests Completed');
+  console.log('Authentication Flow Tests Completed');
 }
