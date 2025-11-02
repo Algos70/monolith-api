@@ -1,6 +1,7 @@
-import { check } from "k6";
+import { check, sleep } from "k6";
 import { GraphQLClient } from "../utils/graphql-client.js";
 import { PRODUCT_QUERIES } from "../queries/product-queries.js";
+import { TEST_CONFIG } from "../config/test-config.js";
 
 export class ProductService {
   constructor(client = new GraphQLClient(), sessionHeaders = {}) {
@@ -326,5 +327,265 @@ export class ProductService {
     }
 
     return response;
+  }
+
+  async runProductWorkflowTest(productSlug = "airpods-pro") {
+    await this.getProducts();
+    sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
+
+    const productResponse = await this.getProductBySlug({
+      slug: productSlug,
+    });
+
+    await this.getProductById({
+      id: productResponse.parsed?.data?.productBySlug?.product?.id,
+    });
+
+    await this.getProductsByCategory({
+      categoryId: productResponse.parsed?.data?.productBySlug?.product?.category?.id,
+    });
+    sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
+
+    await this.getFeaturedProducts({ limit: 8 });
+    sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
+
+    await this.searchProducts({
+      search: "AirPods",
+      inStockOnly: true,
+      page: 1,
+      limit: 10,
+    });
+  }
+
+  async runNegativeFlowTests() {
+    // Test 1: Get product by invalid/empty slug
+    const invalidSlugResponse = this.client.requestWithParsing(
+      PRODUCT_QUERIES.GET_PRODUCT_BY_SLUG,
+      { slug: "" },
+      this.sessionHeaders
+    );
+
+    check(invalidSlugResponse, {
+      "productBySlug negative: response parsed": (r) => r.parsed !== null,
+      "productBySlug negative: success false for empty slug": (r) =>
+        r.parsed?.data?.productBySlug?.success === false,
+      "productBySlug negative: correct error message for empty slug": (r) =>
+        r.parsed?.data?.productBySlug?.message === "Invalid slug parameter",
+    });
+
+    // Test 2: Get product by non-existent slug
+    const nonExistentSlugResponse = this.client.requestWithParsing(
+      PRODUCT_QUERIES.GET_PRODUCT_BY_SLUG,
+      { slug: "non-existent-product-slug-12345" },
+      this.sessionHeaders
+    );
+
+    check(nonExistentSlugResponse, {
+      "productBySlug negative: response parsed for non-existent": (r) => r.parsed !== null,
+      "productBySlug negative: success false for non-existent slug": (r) =>
+        r.parsed?.data?.productBySlug?.success === false,
+      "productBySlug negative: correct error message for non-existent": (r) =>
+        r.parsed?.data?.productBySlug?.message === "Product not found",
+    });
+
+    // Test 3: Get product by invalid ID format
+    const invalidIdResponse = this.client.requestWithParsing(
+      PRODUCT_QUERIES.GET_PRODUCT_BY_ID,
+      { id: "invalid-uuid-format" },
+      this.sessionHeaders
+    );
+
+    check(invalidIdResponse, {
+      "productById negative: response parsed": (r) => r.parsed !== null,
+      "productById negative: success false for invalid id format": (r) =>
+        r.parsed?.data?.product?.success === false,
+      "productById negative: correct error message for invalid format": (r) =>
+        r.parsed?.data?.product?.message === "Invalid product ID format",
+    });
+
+    // Test 4: Get product by empty ID
+    const emptyIdResponse = this.client.requestWithParsing(
+      PRODUCT_QUERIES.GET_PRODUCT_BY_ID,
+      { id: "" },
+      this.sessionHeaders
+    );
+
+    check(emptyIdResponse, {
+      "productById negative: response parsed for empty id": (r) => r.parsed !== null,
+      "productById negative: success false for empty id": (r) =>
+        r.parsed?.data?.product?.success === false,
+      "productById negative: correct error message for empty id": (r) =>
+        r.parsed?.data?.product?.message === "Invalid product ID parameter",
+    });
+
+    // Test 5: Get products by invalid category ID
+    const invalidCategoryResponse = this.client.requestWithParsing(
+      PRODUCT_QUERIES.GET_PRODUCTS_BY_CATEGORY,
+      { categoryId: "" },
+      this.sessionHeaders
+    );
+
+    check(invalidCategoryResponse, {
+      "productsByCategory negative: response parsed": (r) => r.parsed !== null,
+      "productsByCategory negative: success false for empty category": (r) =>
+        r.parsed?.data?.productsByCategory?.success === false,
+      "productsByCategory negative: correct error message for empty category": (r) =>
+        r.parsed?.data?.productsByCategory?.message === "Invalid category ID parameter",
+    });
+
+    // Test 6: Search with no results
+    const noResultsSearchResponse = this.client.requestWithParsing(
+      PRODUCT_QUERIES.SEARCH_PRODUCTS,
+      { 
+        search: "nonexistentproductname12345xyz",
+        page: 1,
+        limit: 10 
+      },
+      this.sessionHeaders
+    );
+
+    check(noResultsSearchResponse, {
+      "searchProducts negative: response parsed": (r) => r.parsed !== null,
+      "searchProducts negative: success true but empty results": (r) =>
+        r.parsed?.data?.searchProducts?.success === true,
+      "searchProducts negative: empty products array": (r) =>
+        Array.isArray(r.parsed?.data?.searchProducts?.products) &&
+        r.parsed?.data?.searchProducts?.products?.length === 0,
+      "searchProducts negative: zero total count": (r) =>
+        r.parsed?.data?.searchProducts?.pagination?.total === 0,
+    });
+
+    sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
+  }
+
+  async runEdgeCaseTests() {
+    // Test 1: Search with special characters and symbols
+    const specialCharSearchResponse = this.client.requestWithParsing(
+      PRODUCT_QUERIES.SEARCH_PRODUCTS,
+      { 
+        search: "!@#$%^&*()",
+        page: 1,
+        limit: 10 
+      },
+      this.sessionHeaders
+    );
+
+    check(specialCharSearchResponse, {
+      "searchProducts edge: response parsed for special chars": (r) => r.parsed !== null,
+      "searchProducts edge: success true for special chars": (r) =>
+        r.parsed?.data?.searchProducts?.success === true,
+      "searchProducts edge: handles special characters gracefully": (r) =>
+        Array.isArray(r.parsed?.data?.searchProducts?.products),
+    });
+
+    // Test 2: Search with very long string
+    const longSearchResponse = this.client.requestWithParsing(
+      PRODUCT_QUERIES.SEARCH_PRODUCTS,
+      { 
+        search: "a".repeat(1000),
+        page: 1,
+        limit: 10 
+      },
+      this.sessionHeaders
+    );
+
+    check(longSearchResponse, {
+      "searchProducts edge: response parsed for long string": (r) => r.parsed !== null,
+      "searchProducts edge: success true for long string": (r) =>
+        r.parsed?.data?.searchProducts?.success === true,
+      "searchProducts edge: handles long search string": (r) =>
+        Array.isArray(r.parsed?.data?.searchProducts?.products),
+    });
+
+    // Test 3: Pagination with extreme values
+    const extremePaginationResponse = this.client.requestWithParsing(
+      PRODUCT_QUERIES.GET_PRODUCTS,
+      { 
+        page: 999999,
+        limit: 1 
+      },
+      this.sessionHeaders
+    );
+
+    check(extremePaginationResponse, {
+      "products edge: response parsed for extreme pagination": (r) => r.parsed !== null,
+      "products edge: success true for extreme pagination": (r) =>
+        r.parsed?.data?.products?.success === true,
+      "products edge: empty results for out of range page": (r) =>
+        Array.isArray(r.parsed?.data?.products?.products) &&
+        r.parsed?.data?.products?.products?.length === 0,
+    });
+
+    // Test 4: Search with minimum limit (1)
+    const minLimitResponse = this.client.requestWithParsing(
+      PRODUCT_QUERIES.SEARCH_PRODUCTS,
+      { 
+        search: "AirPods",
+        page: 1,
+        limit: 1 
+      },
+      this.sessionHeaders
+    );
+
+    check(minLimitResponse, {
+      "searchProducts edge: response parsed for min limit": (r) => r.parsed !== null,
+      "searchProducts edge: success true for min limit": (r) =>
+        r.parsed?.data?.searchProducts?.success === true,
+      "searchProducts edge: respects limit of 1": (r) =>
+        r.parsed?.data?.searchProducts?.products?.length <= 1,
+      "searchProducts edge: pagination limit is 1": (r) =>
+        r.parsed?.data?.searchProducts?.pagination?.limit === 1,
+    });
+
+    // Test 5: Search with case sensitivity variations
+    const caseVariationsResponse = this.client.requestWithParsing(
+      PRODUCT_QUERIES.SEARCH_PRODUCTS,
+      { 
+        search: "AIRPODS",
+        page: 1,
+        limit: 10 
+      },
+      this.sessionHeaders
+    );
+
+    check(caseVariationsResponse, {
+      "searchProducts edge: response parsed for uppercase": (r) => r.parsed !== null,
+      "searchProducts edge: success true for uppercase": (r) =>
+        r.parsed?.data?.searchProducts?.success === true,
+      "searchProducts edge: case insensitive search works": (r) =>
+        r.parsed?.data?.searchProducts?.products?.length > 0,
+    });
+
+    // Test 6: Product slug with whitespace
+    const whitespaceSlugResponse = this.client.requestWithParsing(
+      PRODUCT_QUERIES.GET_PRODUCT_BY_SLUG,
+      { slug: "  airpods-pro  " },
+      this.sessionHeaders
+    );
+
+    check(whitespaceSlugResponse, {
+      "productBySlug edge: response parsed for whitespace": (r) => r.parsed !== null,
+      "productBySlug edge: success true for trimmed slug": (r) =>
+        r.parsed?.data?.productBySlug?.success === true,
+      "productBySlug edge: finds product despite whitespace": (r) =>
+        r.parsed?.data?.productBySlug?.product?.slug === "airpods-pro",
+    });
+
+    // Test 7: Featured products with maximum limit
+    const maxFeaturedResponse = this.client.requestWithParsing(
+      PRODUCT_QUERIES.GET_FEATURED_PRODUCTS,
+      { limit: 100 },
+      this.sessionHeaders
+    );
+
+    check(maxFeaturedResponse, {
+      "featuredProducts edge: response parsed for max limit": (r) => r.parsed !== null,
+      "featuredProducts edge: success true for max limit": (r) =>
+        r.parsed?.data?.featuredProducts?.success === true,
+      "featuredProducts edge: handles large limit gracefully": (r) =>
+        Array.isArray(r.parsed?.data?.featuredProducts?.products),
+    });
+
+    sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
   }
 }

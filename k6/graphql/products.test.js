@@ -6,45 +6,16 @@ import { setupAuth } from "./utils/test-base.js";
 export const options = TEST_CONFIG.SMOKE_TEST_OPTIONS;
 
 export default async function () {
-  console.log("\n🛍️ Starting Product User Queries Tests");
-  console.log("==========================================");
+  const { sessionHeaders } = setupAuth();
 
-  const { user, sessionHeaders, cleanup } = setupAuth();
-
-  // Create product service with authenticated session
   const productService = new ProductService(undefined, sessionHeaders);
 
-  // Test 1: Get All Products - Basic product listing without filters
-  await productService.getProducts();
+  await productService.runProductWorkflowTest("airpods-pro");
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
-  // Test 2: Get product by slug
-  const productResponse = await productService.getProductBySlug({
-    slug: "airpods-pro",
-  });
-
-  // Test 3: Get product by id
-  await productService.getProductById({
-    id: productResponse.parsed?.data?.productBySlug?.product?.id,
-  });
-
-  // Test 4: Get products by category id
-  await productService.getProductsByCategory({
-    categoryId: productResponse.parsed?.data?.productBySlug?.product?.category?.id,
-  });
+  await productService.runEdgeCaseTests();
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
-  // Test 5: Get featured products 
-  await productService.getFeaturedProducts({ limit: 8 });
+  await productService.runNegativeFlowTests();
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  // Test 6: Search products - Test search functionality with different parameters
-  await productService.searchProducts({
-    search: "AirPods",
-    inStockOnly: true,
-    page: 1,
-    limit: 10,
-  });
-
-  console.log("\n✅ Product User Tests Completed");
 }
