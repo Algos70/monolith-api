@@ -38,7 +38,7 @@ export class AuthService {
 
     const variables = this.isGraphQLClient ? { input: user } : {};
     const response = this.makeRequest(query, variables);
-
+    console.log("response: ", response.parsed)
     const success = check(response, {
       'register: response parsed': (r) => r.parsed !== null,
       'register: success true': (r) => r.parsed?.data?.register?.success === true || r.parsed?.success === true,

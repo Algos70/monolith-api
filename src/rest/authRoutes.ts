@@ -168,10 +168,7 @@ router.post("/logout", async (req: Request, res: Response) => {
 // Get current user
 router.get("/me", (req: Request, res: Response) => {
   if (!SessionService.isAuthenticated(req)) {
-    return res.status(401).json({ 
-      success: false,
-      message: "Not authenticated"
-    });
+    return res.status(401).json({ preferred_username: null });
   }
 
   // Return user info without sensitive tokens (same as GraphQL)
