@@ -1,3 +1,4 @@
+
 import { sleep } from "k6";
 import { CartService } from "./services/cart-service.js";
 import { ProductService } from "./services/product-service.js";
@@ -24,7 +25,9 @@ export default async function () {
   // Run edge case tests
   await cartService.runEdgeCaseTests("airpods-pro", productService);
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
+  // Run negative flow tests
+  await cartService.runNegativeFlowTests("airpods-pro", productService);
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
   console.log("Cart User Tests Completed");
   console.log("==========================================");
 }

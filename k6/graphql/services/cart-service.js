@@ -52,7 +52,8 @@ export class CartService {
       "addItemToCart: message matches expected": (r) => r.parsed?.data?.addItemToCart?.message === expectedMessage,
     });
 
-    if (expectedProductId) {
+    // Only check cartItem details when we expect success and have expectedProductId
+    if (expectedProductId && expectedSuccess) {
       check(response, {
         "addItemToCart: cartItem has correct product": (r) => 
           r.parsed?.data?.addItemToCart?.cartItem?.product?.id === expectedProductId,
@@ -87,7 +88,7 @@ export class CartService {
   /**
    * Decrease item quantity in cart
    */
-  async decreaseItemQuantity(variables) {
+  async decreaseItemQuantity(variables, expectedMessage = "Item quantity decreased successfully", expectedSuccess = true) {
     
     const response = this.client.requestWithParsing(
       CART_QUERIES.DECREASE_ITEM_QUANTITY,
@@ -97,8 +98,8 @@ export class CartService {
     
     check(response, {
       "decreaseItemQuantity: response parsed": (r) => r.parsed !== null,
-      "decreaseItemQuantity: success is true": (r) => r.parsed?.data?.decreaseItemQuantity?.success === true,
-      "decreaseItemQuantity: message matches expected": (r) => r.parsed?.data?.decreaseItemQuantity?.message === "Item quantity decreased successfully",
+      "decreaseItemQuantity: success matches expected": (r) => r.parsed?.data?.decreaseItemQuantity?.success === expectedSuccess,
+      "decreaseItemQuantity: message matches expected": (r) => r.parsed?.data?.decreaseItemQuantity?.message === expectedMessage,
     });
 
     return response;
@@ -114,6 +115,8 @@ export class CartService {
       variables,
       this.sessionHeaders
     );
+    
+
     
     check(response, {
       "removeItemFromCart: response parsed": (r) => r.parsed !== null,
@@ -223,6 +226,9 @@ export class CartService {
    * Run edge case tests
    */
   async runEdgeCaseTests(productSlug = "airpods-pro", productService) {
+    // Clear cart before starting edge case tests
+    await this.clearCart();
+    
     // Get real product ID for edge case testing
     const productResponse = await productService.getProductBySlug({ slug: productSlug });
     const realProductId = productResponse.parsed?.data?.productBySlug?.product?.id;
@@ -249,5 +255,188 @@ export class CartService {
     await this.removeItemFromCart({
       productId: "non-existent-product-id"
     }, null, "Item not found in cart", false);
+  }
+
+  /**
+   * Run comprehensive negative flow tests
+   */
+  async runNegativeFlowTests(productSlug = "airpods-pro", productService) {
+    console.log("Running Cart Negative Flow Tests...");
+    
+    // Clear cart before starting negative flow tests
+    await this.clearCart();
+    
+    // Get real product ID for testing
+    const productResponse = await productService.getProductBySlug({ slug: productSlug });
+    const realProductId = productResponse.parsed?.data?.productBySlug?.product?.id;
+    
+    if (!realProductId) {
+      console.log("Could not get real product ID for negative flow tests");
+      return;
+    }
+
+    // Test 1: Add item with invalid product ID
+    console.log("Test 1: Adding item with invalid product ID");
+    await this.addItemToCart({
+      input: {
+        productId: "invalid-product-id-12345",
+        quantity: 1
+      }
+    }, null, "invalid input syntax for type uuid: \"invalid-product-id-12345\"", false);
+
+    // Test 2: Add item with negative quantity
+    console.log("Test 2: Adding item with negative quantity");
+    await this.addItemToCart({
+      input: {
+        productId: realProductId,
+        quantity: -5
+      }
+    }, null, "Product ID and valid quantity are required", false);
+
+    // Test 3: Add item with extremely large quantity (API allows this)
+    console.log("Test 3: Adding item with extremely large quantity");
+    // Don't check exact quantity since API might cap or handle large numbers differently
+    await this.addItemToCart({
+      input: {
+        productId: realProductId,
+        quantity: 999999
+      }
+    }, null, "Item added to cart successfully", true);
+
+    // Test 4: Update quantity for non-existent item
+    console.log("Test 4: Updating quantity for non-existent item");
+    await this.updateItemQuantity({
+      input: {
+        productId: "non-existent-item-id",
+        quantity: 5
+      }
+    }, "Item not found in cart", false);
+
+    // Test 5: Update quantity to zero (should remove item)
+    console.log("Test 5: Updating quantity to zero");
+    // First add an item (don't check quantity since cart might have existing items)
+    await this.addItemToCart({
+      input: { productId: realProductId, quantity: 3 }
+    }, null, "Item added to cart successfully", true);
+    
+    // Then update to zero (should succeed but remove the item)
+    await this.updateItemQuantity({
+      input: {
+        productId: realProductId,
+        quantity: 0
+      }
+    }, "Item quantity updated successfully", true);
+
+    // Test 6: Decrease quantity for non-existent item
+    console.log("Test 6: Decreasing quantity for non-existent item");
+    await this.decreaseItemQuantity({
+      input: {
+        productId: "non-existent-item-id",
+        decreaseBy: 1
+      }
+    }, "Item not found in cart", false);
+
+    // Test 7: Remove item that doesn't exist in cart
+    console.log("Test 7: Removing non-existent item from cart");
+    await this.removeItemFromCart({
+      productId: "definitely-not-in-cart-id"
+    }, null, "Item not found in cart", false);
+
+    // Test 8: Zero quantity operations (should be handled gracefully)
+    console.log("Test 8: Zero quantity operations");
+    
+    // Add item with zero quantity
+    await this.addItemToCart({
+      input: {
+        productId: realProductId,
+        quantity: 0
+      }
+    }, null, "Product ID and valid quantity are required", false);
+
+    // Test 9: Boundary value testing
+    console.log("Test 9: Boundary value testing");
+    
+    // Add item with quantity 1 (minimum valid) - don't check quantity since cart state may vary
+    await this.addItemToCart({
+      input: {
+        productId: realProductId,
+        quantity: 1
+      }
+    }, null, "Item added to cart successfully", true);
+
+    // Decrease by more than available quantity (should remove item)
+    await this.decreaseItemQuantity({
+      input: {
+        productId: realProductId,
+        decreaseBy: 10
+      }
+    }, "Item quantity decreased successfully", true);
+
+    // Test 10: Multiple operations on empty cart
+    console.log("Test 10: Operations on empty cart");
+    
+    // Clear cart first
+    await this.clearCart();
+    
+    // Try to remove from empty cart
+    await this.removeItemFromCart({
+      productId: realProductId
+    }, null, "Item not found in cart", false);
+    
+    // Try to update quantity in empty cart
+    await this.updateItemQuantity({
+      input: {
+        productId: realProductId,
+        quantity: 5
+      }
+    }, "Item not found in cart", false);
+
+    // Try to decrease quantity in empty cart
+    await this.decreaseItemQuantity({
+      input: {
+        productId: realProductId,
+        decreaseBy: 1
+      }
+    }, "Item not found in cart", false);
+
+    // Test 11: Concurrent operations stress test
+    console.log("Test 11: Concurrent operations on same item");
+    
+    // Add item first (don't check quantity since cart state may vary from previous tests)
+    await this.addItemToCart({
+      input: { productId: realProductId, quantity: 5 }
+    }, null, "Item added to cart successfully", true);
+    
+    // Try to add same item again (should update quantity or handle gracefully)
+    // Don't check quantity since API behavior for duplicate adds may vary
+    await this.addItemToCart({
+      input: { productId: realProductId, quantity: 3 }
+    }, null, "Item added to cart successfully", true);
+
+    // Test 12: Invalid decrease amounts
+    console.log("Test 12: Invalid decrease amounts");
+    
+    // First add an item for testing decrease operations (don't check quantity since cart state may vary)
+    await this.addItemToCart({
+      input: { productId: realProductId, quantity: 5 }
+    }, null, "Item added to cart successfully", true);
+    
+    // Try to decrease by zero (should fail)
+    await this.decreaseItemQuantity({
+      input: {
+        productId: realProductId,
+        decreaseBy: 0
+      }
+    }, "Decrease amount must be positive", false);
+    
+    // Try to decrease by negative amount (should fail)
+    await this.decreaseItemQuantity({
+      input: {
+        productId: realProductId,
+        decreaseBy: -5
+      }
+    }, "Decrease amount must be positive", false);
+
+    console.log("Negative Flow Tests Completed");
   }
 }
