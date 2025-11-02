@@ -34,50 +34,50 @@ export const authResolvers = {
       { input }: { input: { username: string; password: string } },
       context: GraphQLContext
     ) => {
-      try {
-        const { username, password } = input;
+      const { username, password } = input;
 
-        if (!username || !password) {
-          throw new UserInputError("Username and password are required");
-        }
-
-        const config = getKeycloakConfig();
-
-        if (!config.clientSecret) {
-          throw new Error("Server configuration error: Missing client secret");
-        }
-
-        // Use AuthService for login
-        const authService = new AuthService({
-          keycloakBaseUrl: config.baseUrl,
-          keycloakRealm: config.realm,
-          publicClientId: config.clientId,
-          frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
-        });
-
-        const result = await authService.loginWithCredentials(
-          { username, password },
-          { clientId: config.clientId, clientSecret: config.clientSecret }
-        );
-
-        // Store user session
-        SessionService.storeUser(context.req, result.user);
-        await SessionService.saveSession(context.req);
-
-        // Return sanitized result
-        const { access_token, refresh_token, id_token, ...sanitizedUser } =
-          result.user;
-        return {
-          ...result,
-          user: sanitizedUser,
-        };
-      } catch (error: any) {
-        if (error.message.includes("Invalid username or password")) {
-          throw new AuthenticationError(error.message);
-        }
-
-        throw new Error(error.message || "Login failed");
+      if (!username || !password) {
+        throw new UserInputError("Username and password are required");
       }
+
+      const config = getKeycloakConfig();
+
+      if (!config.clientSecret) {
+        throw new Error("Server configuration error: Missing client secret");
+      }
+
+      // Use AuthService for login
+      const authService = new AuthService({
+        keycloakBaseUrl: config.baseUrl,
+        keycloakRealm: config.realm,
+        publicClientId: config.clientId,
+        frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
+      });
+
+      const result = await authService.loginWithCredentials(
+        { username, password },
+        { clientId: config.clientId, clientSecret: config.clientSecret }
+      );
+
+      if (!result.success) {
+        if (result.message.includes("Invalid username or password")) {
+          throw new AuthenticationError(result.message);
+        }
+        throw new Error(result.message);
+      }
+
+      // Store user session
+      SessionService.storeUser(context.req, result.user);
+      await SessionService.saveSession(context.req);
+
+      // Return sanitized result
+      const { access_token, refresh_token, id_token, ...sanitizedUser } =
+        result.user;
+      return {
+        success: result.success,
+        message: result.message,
+        user: sanitizedUser,
+      };
     },
 
     // Register mutation
@@ -96,45 +96,42 @@ export const authResolvers = {
       },
       context: GraphQLContext
     ) => {
-      try {
-        const { username, email, password, firstName, lastName } = input;
+      const { username, email, password, firstName, lastName } = input;
 
-        if (!username || !email || !password) {
-          throw new UserInputError(
-            "Username, email, and password are required"
-          );
-        }
-
-        const config = getKeycloakConfig();
-
-        if (!config.clientSecret) {
-          throw new Error("Server configuration error: Missing client secret");
-        }
-
-        // Use AuthService for registration
-        const authService = new AuthService({
-          keycloakBaseUrl: config.baseUrl,
-          keycloakRealm: config.realm,
-          publicClientId: config.clientId,
-          frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
-        });
-
-        const result = await authService.registerUser(
-          { username, email, password, firstName, lastName },
-          { clientId: config.clientId, clientSecret: config.clientSecret }
+      if (!username || !email || !password) {
+        throw new UserInputError(
+          "Username, email, and password are required"
         );
-
-        return result;
-      } catch (error: any) {
-        console.error("GraphQL Registration error:", error.message);
-
-        // Handle specific errors
-        if (error.message.includes("User already exists")) {
-          throw new UserInputError(error.message);
-        }
-
-        throw new Error(error.message || "Registration failed");
       }
+
+      const config = getKeycloakConfig();
+
+      if (!config.clientSecret) {
+        throw new Error("Server configuration error: Missing client secret");
+      }
+
+      // Use AuthService for registration
+      const authService = new AuthService({
+        keycloakBaseUrl: config.baseUrl,
+        keycloakRealm: config.realm,
+        publicClientId: config.clientId,
+        frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
+      });
+
+      const result = await authService.registerUser(
+        { username, email, password, firstName, lastName },
+        { clientId: config.clientId, clientSecret: config.clientSecret }
+      );
+
+      if (!result.success) {
+        // Handle specific errors
+        if (result.message.includes("User already exists")) {
+          throw new UserInputError(result.message);
+        }
+        throw new Error(result.message);
+      }
+
+      return result;
     },
 
     // Logout mutation
