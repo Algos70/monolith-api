@@ -57,6 +57,23 @@ export interface UserWalletsResult {
   wallets: Wallet[];
 }
 
+export interface UserWalletResult {
+  success: boolean;
+  message: string;
+  wallet: Wallet | null;
+}
+
+export interface UserWalletBalanceResult {
+  success: boolean;
+  message: string;
+  balance: number;
+}
+
+export interface UserWalletOperationResult {
+  success: boolean;
+  message: string;
+}
+
 export class WalletService {
   private walletRepository: WalletRepository;
 
@@ -345,39 +362,71 @@ export class WalletService {
   }
 
   // Create a new wallet for a user
-  async createUserWallet(data: CreateWalletData): Promise<Wallet> {
-    const { userId, currency, initialBalance = 0 } = data;
+  async createUserWallet(data: CreateWalletData): Promise<UserWalletResult> {
+    try {
+      const { userId, currency, initialBalance = 0 } = data;
 
-    return await this.createWallet({
-      userId,
-      currency,
-      initialBalance,
-    });
+      const wallet = await this.createWallet({
+        userId,
+        currency,
+        initialBalance,
+      });
+
+      return {
+        success: true,
+        message: "Wallet created successfully",
+        wallet: wallet,
+      };
+    } catch (error) {
+      console.error("Error in WalletService.createUserWallet:", error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Error creating wallet",
+        wallet: null,
+      };
+    }
   }
 
   // Increase balance of user's own wallet
   async increaseUserWalletBalance(
     data: UserWalletIncreaseBalanceData
-  ): Promise<Wallet> {
-    const { userId, walletId, amountMinor } = data;
+  ): Promise<UserWalletOperationResult> {
+    try {
+      const { userId, walletId, amountMinor } = data;
 
-    // Verify wallet belongs to the user
-    const wallet = await this.findById(walletId);
-    if (!wallet) {
-      throw new Error("Wallet not found");
+      // Verify wallet belongs to the user
+      const wallet = await this.findById(walletId);
+      if (!wallet) {
+        return {
+          success: false,
+          message: "Wallet not found",
+        };
+      }
+
+      if (wallet.user.id !== userId) {
+        return {
+          success: false,
+          message: "You can only modify your own wallets",
+        };
+      }
+
+      await this.increaseBalance({
+        userId,
+        currency: wallet.currency,
+        amountMinor,
+      });
+
+      return {
+        success: true,
+        message: "Balance increased successfully",
+      };
+    } catch (error) {
+      console.error("Error in WalletService.increaseUserWalletBalance:", error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Error increasing balance",
+      };
     }
-
-    if (wallet.user.id !== userId) {
-      const error = new Error("You can only modify your own wallets") as any;
-      error.code = "FORBIDDEN";
-      throw error;
-    }
-
-    return await this.increaseBalance({
-      userId,
-      currency: wallet.currency,
-      amountMinor,
-    });
   }
 
   // Delete user's own wallet
@@ -446,15 +495,52 @@ export class WalletService {
   async getUserWalletByCurrency(
     userId: string,
     currency: string
-  ): Promise<Wallet | null> {
-    return await this.findByUserAndCurrency(userId, currency);
+  ): Promise<UserWalletResult> {
+    try {
+      const wallet = await this.findByUserAndCurrency(userId, currency);
+      
+      if (!wallet) {
+        return {
+          success: false,
+          message: `Wallet not found for currency ${currency}`,
+          wallet: null,
+        };
+      }
+
+      return {
+        success: true,
+        message: "Wallet found successfully",
+        wallet: wallet,
+      };
+    } catch (error) {
+      console.error("Error in WalletService.getUserWalletByCurrency:", error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Error retrieving wallet",
+        wallet: null,
+      };
+    }
   }
 
   // Get balance for user's wallet by currency
   async getUserWalletBalance(
     userId: string,
     currency: string
-  ): Promise<number> {
-    return await this.getBalance(userId, currency);
+  ): Promise<UserWalletBalanceResult> {
+    try {
+      const balance = await this.getBalance(userId, currency);
+      return {
+        success: true,
+        message: "Balance retrieved successfully",
+        balance: balance,
+      };
+    } catch (error) {
+      console.error("Error in WalletService.getUserWalletBalance:", error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Error retrieving balance",
+        balance: 0,
+      };
+    }
   }
 }

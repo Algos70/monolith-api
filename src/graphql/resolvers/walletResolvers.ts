@@ -59,18 +59,6 @@ export class WalletResolvers {
       });
     } catch (error) {
       console.error("GraphQL createUserWallet error:", error);
-      if (error instanceof Error) {
-        const validationError = error as any;
-        if (validationError.code === "DUPLICATE") {
-          throw new UserInputError(error.message);
-        }
-        if (
-          validationError.code === "INVALID_FORMAT" ||
-          validationError.code === "INVALID_TYPE"
-        ) {
-          throw new UserInputError(error.message);
-        }
-      }
       if (error instanceof UserInputError) {
         throw error;
       }
@@ -101,32 +89,26 @@ export class WalletResolvers {
         throw new UserInputError("Amount must be a positive number");
       }
 
-      return await userWalletService.increaseUserWalletBalance({
+      const result = await userWalletService.increaseUserWalletBalance({
         userId,
         walletId,
         amountMinor: amountMinorNum,
       });
+
+      if (!result.success) {
+        throw new UserInputError(result.message);
+      }
+
+      return result;
     } catch (error) {
       console.error("GraphQL increaseUserWalletBalance error:", error);
-      if (error instanceof Error) {
-        const validationError = error as any;
-        if (validationError.code === "FORBIDDEN") {
-          throw new ForbiddenError(error.message);
-        }
-        if (validationError.code === "INVALID_TYPE") {
-          throw new UserInputError(error.message);
-        }
-        if (validationError.code === "NOT_FOUND") {
-          throw new UserInputError(error.message);
-        }
-        if (error.message === "Wallet not found") {
-          throw new UserInputError(error.message);
-        }
-      }
       if (error instanceof UserInputError || error instanceof ForbiddenError) {
         throw error;
       }
-      throw new Error("Failed to increase wallet balance");
+      return {
+        success: false,
+        message: "Failed to increase wallet balance",
+      };
     }
   }
 
@@ -233,16 +215,10 @@ export class WalletResolvers {
         throw new UserInputError("User ID not found in session");
       }
 
-      const wallet = await userWalletService.getUserWalletByCurrency(
+      return await userWalletService.getUserWalletByCurrency(
         userId,
         currency
       );
-
-      if (!wallet) {
-        throw new UserInputError("Wallet not found");
-      }
-
-      return wallet;
     } catch (error) {
       console.error("GraphQL userWalletByCurrency error:", error);
       if (error instanceof UserInputError) {
@@ -260,21 +236,26 @@ export class WalletResolvers {
         throw new UserInputError("User ID not found in session");
       }
 
-      const balance = await userWalletService.getUserWalletBalance(
+      const result = await userWalletService.getUserWalletBalance(
         userId,
         currency
       );
+
       return {
-        balance,
-        currency,
-        userId,
+        success: result.success,
+        message: result.message,
+        balance: result.balance.toString(),
       };
     } catch (error) {
       console.error("GraphQL userWalletBalance error:", error);
       if (error instanceof UserInputError) {
         throw error;
       }
-      throw new Error("Failed to get wallet balance");
+      return {
+        success: false,
+        message: "Failed to get wallet balance",
+        balance: "0",
+      };
     }
   }
 }

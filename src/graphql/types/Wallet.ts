@@ -48,6 +48,17 @@ export const walletTypeDefs = `
     userId: ID!
   }
 
+  type UserWalletBalanceResult {
+    success: Boolean!
+    message: String!
+    balance: String!
+  }
+
+  type UserWalletOperationResult {
+    success: Boolean!
+    message: String!
+  }
+
   type TransferResponse {
     success: Boolean!
     message: String!
@@ -57,6 +68,12 @@ export const walletTypeDefs = `
     success: Boolean!
     message: String!
     wallets: [Wallet!]!
+  }
+
+  type UserWalletResult {
+    success: Boolean!
+    message: String!
+    wallet: Wallet
   }
 
   extend type Query {
@@ -89,10 +106,10 @@ export const walletTypeDefs = `
     userWallets: UserWalletsResult!
     
     # Get user's wallet by currency
-    userWalletByCurrency(currency: String!): Wallet
+    userWalletByCurrency(currency: String!): UserWalletResult!
     
     # Get balance for user's wallet by currency
-    userWalletBalance(currency: String!): BalanceResponse!
+    userWalletBalance(currency: String!): UserWalletBalanceResult!
   }
 
   extend type Mutation {
@@ -113,10 +130,10 @@ export const walletTypeDefs = `
 
     # User wallet operations
     # Create a new wallet for the authenticated user
-    createUserWallet(input: CreateUserWalletInput!): Wallet!
+    createUserWallet(input: CreateUserWalletInput!): UserWalletResult!
     
     # Increase balance of user's own wallet
-    increaseUserWalletBalance(walletId: ID!, input: BalanceOperationInput!): Wallet!
+    increaseUserWalletBalance(walletId: ID!, input: BalanceOperationInput!): UserWalletOperationResult!
     
     # Delete user's own wallet
     deleteUserWallet(walletId: ID!): Boolean!
