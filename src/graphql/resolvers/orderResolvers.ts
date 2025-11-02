@@ -25,28 +25,7 @@ class OrderResolvers {
     return await this.orderService.findByUser(userId);
   }
 
-  // Get specific order by ID (user can only see their own orders)
-  @RequireOrdersReadPermission()
-  async userOrder(_: any, { id }: { id: string }, context: GraphQLContext) {
-    const userId = getCurrentUserId(context);
 
-    if (!userId) {
-      throw new Error("User ID not found");
-    }
-
-    const order = await this.orderService.findById(id);
-    
-    if (!order) {
-      throw new Error("Order not found");
-    }
-
-    // Check if the order belongs to the current user
-    if (order.user.id !== userId) {
-      throw new Error("Access denied");
-    }
-
-    return order;
-  }
 
   // Create new order from cart
   @RequireOrdersWritePermission()
@@ -87,7 +66,6 @@ const orderResolversInstance = new OrderResolvers();
 export const orderResolvers = {
   Query: {
     userOrders: orderResolversInstance.userOrders.bind(orderResolversInstance),
-    userOrder: orderResolversInstance.userOrder.bind(orderResolversInstance),
   },
   Mutation: {
     createOrderFromCart: orderResolversInstance.createOrderFromCart.bind(orderResolversInstance),

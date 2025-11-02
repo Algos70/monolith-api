@@ -33,39 +33,7 @@ router.get(
   }
 );
 
-// GET /orders/:id - Get specific order by ID (user can only see their own orders)
-router.get(
-  "/:id",
-  rateLimitMiddleware.createIPRateLimit({ maxRequests: 450, message: "Too many order detail requests" }),
-  requireOrdersReadPermission,
-  async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const user = SessionService.getUser(req);
-      const userId = user.sub || user.id;
 
-      if (!userId) {
-        return res.status(401).json({ error: "User ID not found in session" });
-      }
-
-      const order = await orderService.findById(id);
-
-      if (!order) {
-        return res.status(404).json({ error: "Order not found" });
-      }
-
-      // Check if the order belongs to the current user
-      if (order.user.id !== userId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      res.json(order);
-    } catch (error) {
-      console.error("Get order error:", error);
-      res.status(500).json({ error: "Failed to fetch order" });
-    }
-  }
-);
 
 // POST /orders - Create new order from cart
 router.post(

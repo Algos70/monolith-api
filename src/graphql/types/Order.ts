@@ -52,7 +52,6 @@ export const orderTypeDefs = `
   extend type Query {
     # User Order Queries
     userOrders: [Order!]!
-    userOrder(id: ID!): Order!
     
     # Admin Order Queries
     adminOrders(
