@@ -30,7 +30,7 @@ export default async function () {
 
   // Test 4: Get products by category id
   await productService.getProductsByCategory({
-    categoryId: "02f94490-358e-4de6-a725-67bed187a89f",
+    categoryId: productResponse.parsed?.data?.productBySlug?.product?.category?.id,
   });
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 

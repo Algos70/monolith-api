@@ -70,19 +70,16 @@ export class ProductService {
         r.parsed?.data?.productBySlug?.message ===
         "Product fetched successfully",
     });
-    console.log
     check(response, {
       "productBySlug: product data matches expected values": (r) => {
         const p = r.parsed?.data?.productBySlug?.product;
         return (
           p &&
-          p.id === "debbe9ec-d7ad-47dc-af6c-d9001dd08844" &&
           p.name === "AirPods Pro" &&
           p.slug === "airpods-pro" &&
           p.priceMinor === 24999 &&
           p.currency === "USD" &&
           p.stockQty === 100 &&
-          p.category.id === "02f94490-358e-4de6-a725-67bed187a89f" &&
           p.category.name === "Electronics" &&
           p.category.slug === "electronics"
         );
@@ -112,13 +109,11 @@ export class ProductService {
         const p = r.parsed?.data?.product?.product;
         return (
           p &&
-          p.id === "debbe9ec-d7ad-47dc-af6c-d9001dd08844" &&
           p.name === "AirPods Pro" &&
           p.slug === "airpods-pro" &&
           p.priceMinor === 24999 &&
           p.currency === "USD" &&
           p.stockQty === 100 &&
-          p.category.id === "02f94490-358e-4de6-a725-67bed187a89f" &&
           p.category.name === "Electronics" &&
           p.category.slug === "electronics"
         );
@@ -265,7 +260,6 @@ export class ProductService {
       "searchProducts: message is correct": (r) =>
         r.parsed?.data?.searchProducts?.message === "Products are sent",
     });
-    console.log("pagination: ", response.parsed?.data?.searchProducts?.pagination?.total)
     check(response, {
       "searchProducts: pagination total is 1": (r) =>
         r.parsed?.data?.searchProducts?.pagination?.total === 1,

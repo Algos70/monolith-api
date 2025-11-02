@@ -171,11 +171,13 @@ export class OrderService {
 
     return await AppDataSource.transaction(async (manager) => {
       // Get user's cart (read-only operation, no transaction needed)
-      const cart = await this.cartService.getUserCart(userId);
+      const cartResponse = await this.cartService.getUserCart(userId);
 
-      if (!cart || !cart.items || cart.items.length === 0) {
+      if (!cartResponse.success || !cartResponse.cartItems || cartResponse.cartItems.length === 0) {
         throw new Error("Cart is empty");
       }
+
+      const cartItems = cartResponse.cartItems;
 
       // Get wallet and verify it belongs to the user (read-only operation)
       const wallet = await this.walletService.findById(walletId);
@@ -192,7 +194,7 @@ export class OrderService {
       let totalMinor = 0;
       const orderItems = [];
 
-      for (const cartItem of cart.items) {
+      for (const cartItem of cartItems) {
         const product = cartItem.product;
 
         // Check if product currency matches wallet currency
@@ -234,7 +236,7 @@ export class OrderService {
       // Now perform all database modifications within the transaction using repositories
 
       // 1. Decrease product stock for each item
-      for (const cartItem of cart.items) {
+      for (const cartItem of cartItems) {
         await this.productService.decreaseStock(
           cartItem.product.id,
           cartItem.qty,

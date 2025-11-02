@@ -27,6 +27,23 @@ const cartTypes = `
     emptyCarts: Int!
   }
 
+  type UserCartResponse {
+    success: Boolean!
+    message: String!
+    cartItems: [CartItem!]!
+  }
+
+  type CartItemResponse {
+    success: Boolean!
+    message: String!
+    cartItem: CartItem
+  }
+
+  type CartOperationResponse {
+    success: Boolean!
+    message: String!
+  }
+
   input CreateCartInput {
     userId: ID!
   }
@@ -60,7 +77,7 @@ const cartTypes = `
 const cartQueries = `
   extend type Query {
     # User Cart Queries
-    userCart: Cart!
+    userCart: UserCartResponse!
 
     # Admin Cart Queries
     adminCarts(page: Int = 1, limit: Int = 10, search: String): CartListResult!
@@ -74,11 +91,11 @@ const cartQueries = `
 const cartMutations = `
   extend type Mutation {
     # User Cart Mutations
-    addItemToCart(input: AddItemToCartInput!): Cart!
-    updateItemQuantity(input: UpdateItemQuantityInput!): Cart!
-    decreaseItemQuantity(input: DecreaseItemQuantityInput!): Cart!
-    removeItemFromCart(productId: ID!): Cart!
-    clearCart: Cart!
+    addItemToCart(input: AddItemToCartInput!): CartItemResponse!
+    updateItemQuantity(input: UpdateItemQuantityInput!): CartOperationResponse!
+    decreaseItemQuantity(input: DecreaseItemQuantityInput!): CartOperationResponse!
+    removeItemFromCart(productId: ID!): CartItemResponse!
+    clearCart: CartOperationResponse!
 
     # Admin Cart Mutations
     adminDeleteCart(id: ID!): Boolean!

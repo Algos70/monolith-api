@@ -6,7 +6,7 @@ import { setupAuth } from "./utils/test-base.js";
 export const options = TEST_CONFIG.SMOKE_TEST_OPTIONS;
 
 export default async function () {
-  console.log("\n💰 Starting Wallet User Queries Tests");
+  console.log("Starting Wallet User Queries Tests");
   console.log("==========================================");
 
   const { user, sessionHeaders, cleanup } = setupAuth();
@@ -56,5 +56,5 @@ export default async function () {
   await walletService.runMultiWalletTest();
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
   
-  console.log("\n✅ Wallet User Tests Completed");
+  console.log("Wallet User Tests Completed");
 }
