@@ -29,16 +29,18 @@ router.post(
       const { username, password } = req.body;
 
       if (!username || !password) {
-        return res
-          .status(400)
-          .json({ error: "Username and password are required" });
+        return res.status(400).json({ 
+          success: false,
+          message: "Username and password are required"
+        });
       }
 
       const config = getKeycloakConfig();
 
       if (!config.clientSecret) {
         return res.status(500).json({
-          error: "Server configuration error: Missing client secret",
+          success: false,
+          message: "Server configuration error: Missing client secret"
         });
       }
 
@@ -59,20 +61,27 @@ router.post(
       SessionService.storeUser(req, result.user);
       await SessionService.saveSession(req);
 
-      // Return sanitized result
+      // Return sanitized result in GraphQL format
       const { access_token, refresh_token, id_token, ...sanitizedUser } = result.user;
       res.json({
-        ...result,
+        success: true,
+        message: "Login successful",
         user: sanitizedUser,
       });
     } catch (error: any) {
       console.error("Login error:", error.message);
 
       if (error.message.includes("Invalid username or password")) {
-        return res.status(401).json({ error: error.message });
+        return res.status(401).json({ 
+          success: false,
+          message: error.message
+        });
       }
 
-      res.status(500).json({ error: error.message || "Login failed" });
+      res.status(500).json({ 
+        success: false,
+        message: error.message || "Login failed"
+      });
     }
   }
 );
@@ -87,7 +96,8 @@ router.post(
 
       if (!username || !email || !password) {
         return res.status(400).json({
-          error: "Username, email, and password are required",
+          success: false,
+          message: "Username, email, and password are required"
         });
       }
 
@@ -95,7 +105,8 @@ router.post(
 
       if (!config.clientSecret) {
         return res.status(500).json({
-          error: "Server configuration error: Missing client secret",
+          success: false,
+          message: "Server configuration error: Missing client secret"
         });
       }
 
@@ -118,15 +129,24 @@ router.post(
 
       // Handle specific errors
       if (error.message.includes("User already exists")) {
-        return res.status(409).json({ error: error.message });
+        return res.status(409).json({ 
+          success: false,
+          message: error.message
+        });
       }
 
       if (error.message.includes("authentication failed") || 
           error.message.includes("configuration error")) {
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ 
+          success: false,
+          message: error.message
+        });
       }
 
-      res.status(500).json({ error: error.message || "Registration failed" });
+      res.status(500).json({ 
+        success: false,
+        message: error.message || "Registration failed"
+      });
     }
   }
 );
@@ -167,15 +187,16 @@ router.post("/logout", async (req: Request, res: Response) => {
 // Get current user
 router.get("/me", (req: Request, res: Response) => {
   if (!SessionService.isAuthenticated(req)) {
-    return res.status(401).json({ error: "Not authenticated" });
+    return res.status(401).json({ 
+      success: false,
+      message: "Not authenticated"
+    });
   }
 
-  // Return user info without sensitive tokens
+  // Return user info without sensitive tokens (same as GraphQL)
   const user = SessionService.getUser(req);
   const { access_token, refresh_token, id_token, ...sanitizedUser } = user;
   res.json(sanitizedUser);
 });
-
-
 
 export default router;
