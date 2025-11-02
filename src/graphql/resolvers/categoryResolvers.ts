@@ -11,9 +11,13 @@ export class CategoryResolvers {
     { page = 1, limit = 10, search }: any,
     context: GraphQLContext
   ) {
+    // Validate and sanitize input parameters at GraphQL level
+    const sanitizedPage = Math.max(1, page || 1);
+    const sanitizedLimit = Math.max(1, Math.min(100, limit || 10));
+    
     return await categoryService.getCategoriesForAdmin({
-      page,
-      limit,
+      page: sanitizedPage,
+      limit: sanitizedLimit,
       search,
     });
   }

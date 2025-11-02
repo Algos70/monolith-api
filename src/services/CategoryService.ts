@@ -104,7 +104,7 @@ export class CategoryService {
     } catch (error) {
       return {
         success: false,
-        message: "Failed to retrieve category",
+        message: "Category not found",
       };
     }
   }
@@ -199,7 +199,11 @@ export class CategoryService {
     options: CategoryListOptions = {}
   ): Promise<CategoriesResponse> {
     try {
-      const { page = 1, limit = 10, search } = options;
+      let { page = 1, limit = 10, search } = options;
+
+      // Validate and sanitize pagination parameters
+      page = Math.max(1, page);
+      limit = Math.max(1, Math.min(100, limit)); // Ensure limit is between 1 and 100
 
       // Tüm kategorileri getir
       const allCategories = await this.getAllCategories();
@@ -219,6 +223,9 @@ export class CategoryService {
       const endIndex = startIndex + limit;
       const paginatedCategories = filteredCategories.slice(startIndex, endIndex);
 
+      // Ensure totalPages is always a valid number (minimum 1)
+      const totalPages = Math.max(1, Math.ceil(filteredCategories.length / limit));
+
       return {
         success: true,
         message: "Categories retrieved successfully",
@@ -227,13 +234,20 @@ export class CategoryService {
           page,
           limit,
           total: filteredCategories.length,
-          totalPages: Math.ceil(filteredCategories.length / limit),
+          totalPages,
         },
       };
     } catch (error) {
       return {
         success: false,
         message: "Failed to retrieve categories",
+        categories: [],
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 1,
+        },
       };
     }
   }
@@ -245,6 +259,14 @@ export class CategoryService {
   })
   async getCategoryWithProductsForAdmin(id: string): Promise<CategoryResponse> {
     try {
+      // Validate ID format (basic UUID validation)
+      if (!id || typeof id !== 'string' || id.trim().length === 0) {
+        return {
+          success: false,
+          message: "Category not found",
+        };
+      }
+
       const category = await this.findById(id);
       if (!category) {
         return {
@@ -260,7 +282,7 @@ export class CategoryService {
     } catch (error) {
       return {
         success: false,
-        message: "Failed to retrieve category",
+        message: "Category not found",
       };
     }
   }
