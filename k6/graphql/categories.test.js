@@ -23,6 +23,10 @@ export default async function () {
   await categoryService.runEdgeCaseTests();
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
+  // Run comprehensive negative tests
+  await categoryService.runNegativeTests();
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
+
   console.log("Category User Tests Completed");
   console.log("============================");
 }

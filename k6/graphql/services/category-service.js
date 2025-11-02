@@ -272,48 +272,91 @@ export class CategoryService {
   }
 
   /**
-   * Run edge case tests
+   * Run edge case tests (boundary conditions)
    */
   async runEdgeCaseTests() {
     console.log("Starting Category Edge Case Tests");
     console.log("====================================");
 
+    // Test 1: Large pagination values
+    const largePaginationResult = await this.getCategories({ page: 999, limit: 100 });
+    check(largePaginationResult, {
+      "Large pagination - handles gracefully": (r) => r.hasOwnProperty("success"),
+    });
+
+    // Test 2: Zero pagination
+    const zeroPaginationResult = await this.getCategories({ page: 0, limit: 0 });
+    check(zeroPaginationResult, {
+      "Zero pagination - handles gracefully": (r) => r.hasOwnProperty("success"),
+    });
+
+    // Test 3: Very long search term
+    const longSearchResult = await this.getCategories({ search: "electronics".repeat(50) });
+    check(longSearchResult, {
+      "Long search term - handles gracefully": (r) => r.hasOwnProperty("success"),
+    });
+
+    // Test 4: Special characters in search
+    const specialSearchResult = await this.getCategories({ search: "café & électronique" });
+    check(specialSearchResult, {
+      "Special characters search - handles gracefully": (r) => r.hasOwnProperty("success"),
+    });
+
+    console.log("Category Edge Case Tests Completed");
+    console.log("====================================");
+  }
+
+  /**
+   * Run negative tests (invalid inputs)
+   */
+  async runNegativeTests() {
+    console.log("Starting Category Negative Tests");
+    console.log("===============================");
+
     // Test 1: Non-existent category by slug
     const nonExistentSlugResult = await this.getCategoryBySlug({ slug: "non-existent-category-12345" }, false);
-    
     check(nonExistentSlugResult, {
-      "Non-existent category by slug - success should be false": (r) => r.success === false,
+      "Non-existent category by slug - should fail": (r) => r.success === false,
       "Non-existent category by slug - correct error message": (r) => r.message === "Category not found",
     });
 
     // Test 2: Non-existent category by ID
     const nonExistentIdResult = await this.getCategoryById({ id: "non-existent-id-12345" }, false);
-    
     check(nonExistentIdResult, {
-      "Non-existent category by ID - success should be false": (r) => r.success === false,
+      "Non-existent category by ID - should fail": (r) => r.success === false,
       "Non-existent category by ID - correct error message": (r) => r.message === "Category not found",
     });
 
-    // Test 3: Category products for non-existent category
-    const nonExistentCategoryProductsResult = await this.getCategoryProducts({ 
-      slug: "non-existent-category-12345",
+    // Test 3: Empty slug
+    const emptySlugResult = await this.getCategoryBySlug({ slug: "" }, false);
+    check(emptySlugResult, {
+      "Empty slug - should fail": (r) => r.success === false,
+    });
+
+    // Test 4: Empty ID
+    const emptyIdResult = await this.getCategoryById({ id: "" }, false);
+    check(emptyIdResult, {
+      "Empty ID - should fail": (r) => r.success === false,
+    });
+
+    // Test 5: Non-existent category products
+    const nonExistentProductsResult = await this.getCategoryProducts({ 
+      slug: "fake-category-123",
       page: 1,
       limit: 5
     }, false);
-    
-    check(nonExistentCategoryProductsResult, {
-      "Non-existent category products - success should be false": (r) => r.success === false,
+    check(nonExistentProductsResult, {
+      "Non-existent category products - should fail": (r) => r.success === false,
       "Non-existent category products - correct error message": (r) => r.message === "Category not found",
     });
 
-    // Test 4: Invalid pagination parameters
-    const invalidPaginationResult = await this.getCategories({ page: -1, limit: 0 });
-    
-    check(invalidPaginationResult, {
-      "Invalid pagination - handles gracefully": (r) => r.hasOwnProperty("success"),
+    // Test 6: Negative pagination
+    const negativePaginationResult = await this.getCategories({ page: -1, limit: -5 });
+    check(negativePaginationResult, {
+      "Negative pagination - should handle gracefully": (r) => r.hasOwnProperty("success"),
     });
 
-    console.log("Category Edge Case Tests Completed");
-    console.log("====================================");
+    console.log("Category Negative Tests Completed");
+    console.log("===============================");
   }
 }
