@@ -3,7 +3,7 @@ import { OrderService } from "./services/order-service.js";
 import { CartService } from "./services/cart-service.js";
 import { ProductService } from "./services/product-service.js";
 import { WalletService } from "./services/wallet-service.js";
-import { TEST_CONFIG } from "./config/test-config.js";
+import { TEST_CONFIG } from "../config/test-config.js";
 import { setupAuth } from "./utils/test-base.js";
 
 export const options = TEST_CONFIG.SMOKE_TEST_OPTIONS;

@@ -1,6 +1,6 @@
 import { sleep } from 'k6';
 import { AuthService } from '../services/auth-service.js';
-import { TEST_CONFIG } from '../config/test-config.js';
+import { TEST_CONFIG } from '../../config/test-config.js';
 
 export class TestBase {
   constructor() {

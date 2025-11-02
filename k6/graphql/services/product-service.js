@@ -1,7 +1,7 @@
 import { check, sleep } from "k6";
 import { GraphQLClient } from "../utils/graphql-client.js";
 import { PRODUCT_QUERIES } from "../queries/product-queries.js";
-import { TEST_CONFIG } from "../config/test-config.js";
+import { TEST_CONFIG } from "../../config/test-config.js";
 
 export class ProductService {
   constructor(client = new GraphQLClient(), sessionHeaders = {}) {

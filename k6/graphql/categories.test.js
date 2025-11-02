@@ -1,6 +1,6 @@
 import { sleep } from "k6";
 import { CategoryService } from "./services/category-service.js";
-import { TEST_CONFIG } from "./config/test-config.js";
+import { TEST_CONFIG } from "../config/test-config.js";
 import { setupAuth } from "./utils/test-base.js";
 
 export const options = TEST_CONFIG.SMOKE_TEST_OPTIONS;
