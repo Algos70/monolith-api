@@ -1,29 +1,25 @@
-import { sleep } from 'k6';
-import { AuthService } from './services/auth-service.js';
-import { TEST_CONFIG } from './config/test-config.js';
+import { sleep } from "k6";
+import { AuthService } from "./services/auth-service.js";
+import { TEST_CONFIG } from "./config/test-config.js";
 
+export const options = TEST_CONFIG.SMOKE_TEST_OPTIONS;
 
-export const options = {
-  vus: 1,
-  iterations: 1,
-};
+export default async function () {
+  console.log("Starting Authentication Tests");
 
-export default function () {
   const authService = new AuthService();
 
-  console.log('Starting Authentication Flow Tests');
-  
-  const { user } = authService.register();
+  // Run comprehensive authentication workflow test
+  await authService.runAuthWorkflowTest();
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
-  authService.login();
+  // Run edge case tests
+  await authService.runEdgeCaseTests();
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
-  authService.me();
+  // Run negative tests
+  await authService.runNegativeTests();
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
-  authService.logout();
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  console.log('Authentication Flow Tests Completed');
+  console.log("Authentication Tests Completed");
 }
