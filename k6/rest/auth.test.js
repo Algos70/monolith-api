@@ -1,13 +1,15 @@
 import { sleep } from "k6";
-import { AuthService } from "./services/auth-service.js";
-import { TEST_CONFIG } from "../config/test-config.js";
+import { AuthService } from "../shared/auth-service.js";
+import { RestClient } from "./utils/rest-client.js";
+import { REST_BASE_URL, TEST_CONFIG } from "../config/test-config.js";
 
 export const options = TEST_CONFIG.SMOKE_TEST_OPTIONS;
 
 export default async function () {
   console.log("Starting REST Authentication Tests");
 
-  const authService = new AuthService();
+  const restClient = new RestClient(REST_BASE_URL);
+  const authService = new AuthService(restClient);
 
   // Run comprehensive authentication workflow test
   await authService.runAuthWorkflowTest();

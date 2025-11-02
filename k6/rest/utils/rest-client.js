@@ -7,8 +7,20 @@ export class RestClient {
   }
 
   requestWithParsing(requestConfig, variables = {}, headers = {}) {
-    const { method, url, body } = requestConfig;
-    const fullUrl = `${this.baseUrl}${url}`;
+    const { method, url, body, params: queryParams } = requestConfig;
+    let fullUrl = `${this.baseUrl}${url}`;
+    
+    // Handle query parameters for GET requests
+    if (queryParams && Object.keys(queryParams).length > 0) {
+      const queryString = Object.entries(queryParams)
+        .filter(([key, value]) => value !== undefined && value !== null)
+        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+        .join('&');
+      
+      if (queryString) {
+        fullUrl += `?${queryString}`;
+      }
+    }
     
     const params = {
       headers: {

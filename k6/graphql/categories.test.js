@@ -1,5 +1,10 @@
 import { sleep } from "k6";
-import { CategoryService } from "./services/category-service.js";
+import { CategoryService } from "../shared/category-service.js";
+import { GraphQLClient } from "./utils/graphql-client.js";
+import {
+  GET_CATEGORIES,
+  GET_CATEGORY_PRODUCTS,
+} from "./queries/category-queries.js";
 import { TEST_CONFIG } from "../config/test-config.js";
 import { setupAuth } from "./utils/test-base.js";
 
@@ -9,10 +14,17 @@ export default async function () {
   console.log("Starting Category User Queries Tests");
   console.log("====================================");
 
-  const { user, sessionHeaders, cleanup } = setupAuth();
+  const { sessionHeaders } = setupAuth();
 
-  // Create category service with authenticated session
-  const categoryService = new CategoryService(undefined, sessionHeaders);
+  // Create GraphQL client and category service with authenticated session
+  const graphqlClient = new GraphQLClient();
+  const categoryQueries = {
+    GET_CATEGORIES,
+    GET_CATEGORY_PRODUCTS,
+  };
+  
+  const categoryService = new CategoryService(graphqlClient, categoryQueries);
+  categoryService.setSessionHeaders(sessionHeaders);
 
   // Run comprehensive category workflow test
   // Uses real category "electronics" from the database (adjust as needed)

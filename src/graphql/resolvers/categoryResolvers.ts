@@ -23,16 +23,6 @@ export class CategoryResolvers {
   }
 
   @RequirePermission("categories_read")
-  async category(_: any, { id }: any, context: GraphQLContext) {
-    return await categoryService.getCategoryWithProductsForAdmin(id);
-  }
-
-  @RequirePermission("categories_read")
-  async categoryBySlug(_: any, { slug }: any, context: GraphQLContext) {
-    return await categoryService.getCategoryBySlug(slug);
-  }
-
-  @RequirePermission("categories_read")
   async categoryProducts(
     _: any,
     { slug, page = 1, limit = 10, inStockOnly = true }: any,
@@ -63,12 +53,6 @@ const categoryResolversInstance = new CategoryResolvers();
 export const categoryResolvers = {
   Query: {
     categories: categoryResolversInstance.categories.bind(
-      categoryResolversInstance
-    ),
-    category: categoryResolversInstance.category.bind(
-      categoryResolversInstance
-    ),
-    categoryBySlug: categoryResolversInstance.categoryBySlug.bind(
       categoryResolversInstance
     ),
     categoryProducts: categoryResolversInstance.categoryProducts.bind(

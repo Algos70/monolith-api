@@ -22,43 +22,6 @@ export const GET_CATEGORIES = `
   }
 `;
 
-export const GET_CATEGORY_BY_ID = `
-  query GetCategoryById($id: ID!) {
-    category(id: $id) {
-      success
-      message
-      category {
-        id
-        slug
-        name
-        createdAt
-        updatedAt
-        products {
-          id
-          name
-          slug
-        }
-      }
-    }
-  }
-`;
-
-export const GET_CATEGORY_BY_SLUG = `
-  query GetCategoryBySlug($slug: String!) {
-    categoryBySlug(slug: $slug) {
-      success
-      message
-      category {
-        id
-        slug
-        name
-        createdAt
-        updatedAt
-      }
-    }
-  }
-`;
-
 export const GET_CATEGORY_PRODUCTS = `
   query GetCategoryProducts($slug: String!, $page: Int, $limit: Int, $inStockOnly: Boolean) {
     categoryProducts(slug: $slug, page: $page, limit: $limit, inStockOnly: $inStockOnly) {
