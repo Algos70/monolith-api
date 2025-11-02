@@ -315,6 +315,145 @@ export class WalletService {
     return response;
   }
 
+  // Comprehensive wallet workflow test - covers all main wallet operations
+  async runWalletWorkflowTest() {
+    // Test 1: Create a new USD wallet first
+    const createWalletResponse = await this.createUserWallet({
+      input: {
+        currency: "USD",
+        initialBalanceMinor: "1000", // $10.00 in minor units (cents)
+      },
+    });
+
+    // Test 2: Get user wallets - Should now include the created wallet
+    const createdWallet = createWalletResponse.parsed?.data?.createUserWallet?.wallet;
+    await this.getUserWallets({}, createdWallet);
+
+    // Test 3: Get wallet by currency (USD) - Should match created wallet
+    await this.getUserWalletByCurrency({
+      currency: "USD",
+    }, createdWallet);
+
+    // Test 4: Get wallet balance for USD - Should match initial balance
+    await this.getUserWalletBalance({
+      currency: "USD",
+    }, 1000); // Expected balance: 1000 (initial balance)
+
+    // Test 5: Increase wallet balance and verify new balance (Integration Test)
+    const walletId = createWalletResponse.parsed?.data?.createUserWallet?.wallet?.id;
+    if (walletId) {
+      await this.increaseBalanceAndVerify(
+        walletId,
+        500, // Add $5.00
+        "USD",
+        1500 // Expected new balance: 1000 + 500 = 1500
+      );
+    }
+
+    return createWalletResponse;
+  }
+
+  // Edge case tests for wallet operations
+  async runEdgeCaseTests() {
+    // Test getting non-existent wallet - should return success: false
+    const nonExistentWalletResponse = this.client.requestWithParsing(
+      WALLET_QUERIES.GET_USER_WALLET_BY_CURRENCY,
+      {
+        currency: "GBP", // Non-existent currency
+      },
+      this.sessionHeaders
+    );
+
+    check(nonExistentWalletResponse, {
+      "edgeCase: non-existent wallet response parsed": (r) => r.parsed !== null,
+      "edgeCase: non-existent wallet success false": (r) =>
+        r.parsed?.data?.userWalletByCurrency?.success === false,
+      "edgeCase: non-existent wallet is null": (r) =>
+        r.parsed?.data?.userWalletByCurrency?.wallet === null,
+      "edgeCase: non-existent wallet message indicates not found": (r) =>
+        r.parsed?.data?.userWalletByCurrency?.message?.includes("not found") ||
+        r.parsed?.data?.userWalletByCurrency?.message?.includes("Wallet not found"),
+    });
+
+    // Test getting balance for non-existent wallet - returns success: true with balance: "0"
+    const nonExistentBalanceResponse = this.client.requestWithParsing(
+      WALLET_QUERIES.GET_USER_WALLET_BALANCE,
+      {
+        currency: "JPY", // Non-existent currency
+      },
+      this.sessionHeaders
+    );
+
+    check(nonExistentBalanceResponse, {
+      "edgeCase: non-existent balance response parsed": (r) => r.parsed !== null,
+      "edgeCase: non-existent balance success true": (r) =>
+        r.parsed?.data?.userWalletBalance?.success === true,
+      "edgeCase: non-existent balance returns zero": (r) =>
+        r.parsed?.data?.userWalletBalance?.balance === "0",
+      "edgeCase: non-existent balance message success": (r) =>
+        r.parsed?.data?.userWalletBalance?.message === "Balance retrieved successfully",
+    });
+  }
+
+  // Negative flow tests for wallet operations
+  async runNegativeFlowTests() {
+    // Test creating wallet with invalid currency (should fail - more than 3 characters)
+    const invalidWalletResponse = this.client.requestWithParsing(
+      WALLET_MUTATIONS.CREATE_USER_WALLET,
+      {
+        input: {
+          currency: "INVALID", // 7 characters - exceeds 3 character limit
+          initialBalanceMinor: "1000",
+        },
+      },
+      this.sessionHeaders
+    );
+
+    check(invalidWalletResponse, {
+      "negativeFlow: invalid currency wallet creation should fail": (r) => {
+        // Should either have errors or success should be false
+        return r.parsed?.errors || r.parsed?.data?.createUserWallet?.success === false;
+      },
+    });
+
+    // Test creating wallet with another invalid currency (too long)
+    const longCurrencyResponse = this.client.requestWithParsing(
+      WALLET_MUTATIONS.CREATE_USER_WALLET,
+      {
+        input: {
+          currency: "TOOLONG", // 7 characters - exceeds 3 character limit
+          initialBalanceMinor: "500",
+        },
+      },
+      this.sessionHeaders
+    );
+
+    check(longCurrencyResponse, {
+      "negativeFlow: long currency wallet creation should fail": (r) => {
+        // Should either have errors or success should be false
+        return r.parsed?.errors || r.parsed?.data?.createUserWallet?.success === false;
+      },
+    });
+
+    // Test increasing balance with invalid wallet ID
+    const invalidIncreaseResponse = this.client.requestWithParsing(
+      WALLET_MUTATIONS.INCREASE_USER_WALLET_BALANCE,
+      {
+        walletId: "invalid-wallet-id",
+        input: {
+          amountMinor: "100",
+        },
+      },
+      this.sessionHeaders
+    );
+
+    check(invalidIncreaseResponse, {
+      "negativeFlow: invalid wallet ID increase should fail": (r) => {
+        return r.parsed?.errors || r.parsed?.data?.increaseUserWalletBalance?.success === false;
+      },
+    });
+  }
+
   // Comprehensive multi-wallet test: Create EUR wallet, test operations, and cleanup
   async runMultiWalletTest() {
     const testResults = {

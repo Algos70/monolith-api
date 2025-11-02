@@ -9,52 +9,29 @@ export default async function () {
   console.log("Starting Wallet User Queries Tests");
   console.log("==========================================");
 
-  const { user, sessionHeaders, cleanup } = setupAuth();
+  const { sessionHeaders } = setupAuth();
 
   // Create wallet service with authenticated session
   const walletService = new WalletService(undefined, sessionHeaders);
 
-  // Test 1: Create a new USD wallet first
-  const createWalletResponse = await walletService.createUserWallet({
-    input: {
-      currency: "USD",
-      initialBalanceMinor: "1000", // $10.00 in minor units (cents)
-    },
-  });
+  // Run comprehensive wallet workflow test - this covers all main wallet operations
+  // Creates USD wallet, tests all queries, increases balance, and verifies operations
+  await walletService.runWalletWorkflowTest();
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
-  // Test 2: Get user wallets - Should now include the created wallet
-  const createdWallet = createWalletResponse.parsed?.data?.createUserWallet?.wallet;
-  await walletService.getUserWallets({}, createdWallet);
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  // Test 3: Get wallet by currency (USD) - Should match created wallet
-  await walletService.getUserWalletByCurrency({
-    currency: "USD",
-  }, createdWallet);
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  // Test 4: Get wallet balance for USD - Should match initial balance
-  await walletService.getUserWalletBalance({
-    currency: "USD",
-  }, 1000); // Expected balance: 1000 (initial balance)
-  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-
-  // Test 5: Increase wallet balance and verify new balance (Integration Test)
-  const walletId = createWalletResponse.parsed?.data?.createUserWallet?.wallet?.id;
-  if (walletId) {
-    await walletService.increaseBalanceAndVerify(
-      walletId,
-      500, // Add $5.00
-      "USD",
-      1500 // Expected new balance: 1000 + 500 = 1500
-    );
-    sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-  }
-  
-  // Test 6: Run comprehensive multi-wallet test (EUR wallet creation, operations, and cleanup)
+  // Run comprehensive multi-wallet test (EUR wallet creation, operations, and cleanup)
   await walletService.runMultiWalletTest();
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
-  
+
+  // Run edge case tests
+  await walletService.runEdgeCaseTests();
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
+
+  // Run negative flow tests
+  await walletService.runNegativeFlowTests();
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
+
+
   console.log("Wallet User Tests Completed");
+  console.log("==========================================");
 }
