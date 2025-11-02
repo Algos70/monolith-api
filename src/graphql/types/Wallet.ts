@@ -53,6 +53,12 @@ export const walletTypeDefs = `
     message: String!
   }
 
+  type UserWalletsResult {
+    success: Boolean!
+    message: String!
+    wallets: [Wallet!]!
+  }
+
   extend type Query {
     # List all wallets with pagination and filtering
     adminWallets(
@@ -80,7 +86,7 @@ export const walletTypeDefs = `
 
     # User wallet operations
     # Get all wallets for the authenticated user
-    userWallets: [Wallet!]!
+    userWallets: UserWalletsResult!
     
     # Get user's wallet by currency
     userWalletByCurrency(currency: String!): Wallet

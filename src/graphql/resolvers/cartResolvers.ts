@@ -1,6 +1,7 @@
 import { CartService } from "../../services/CartService";
-import { requireCartRead, requireCartWrite, UserInputError, type GraphQLContext } from "../utils/permissions";
+import { UserInputError, type GraphQLContext } from "../utils/permissions";
 import { RequirePermission } from "../decorators/permissions";
+import { getCurrentUserId } from "../utils/helperFunctions";
 
 const cartService = new CartService();
 
@@ -8,8 +9,8 @@ export class CartResolvers {
   @RequirePermission("cart_read")
   async userCart(_: any, __: any, context: GraphQLContext) {
     try {
-      const user = requireCartRead(context);
-      return await cartService.getUserCart(user.sub);
+      const userId = getCurrentUserId(context);
+      return await cartService.getUserCart(userId);
     } catch (error) {
       console.error("GraphQL userCart error:", error);
       throw new Error("Failed to fetch cart");
@@ -23,14 +24,14 @@ export class CartResolvers {
     context: GraphQLContext
   ) {
     try {
-      const user = requireCartWrite(context);
+      const userId = getCurrentUserId(context);
       const { productId, quantity } = input;
 
       if (!productId || !quantity || quantity <= 0) {
         throw new UserInputError("Product ID and valid quantity are required");
       }
 
-      return await cartService.addItemToCart(user.sub, productId, quantity);
+      return await cartService.addItemToCart(userId, productId, quantity);
     } catch (error) {
       console.error("GraphQL addItemToCart error:", error);
       if (error instanceof UserInputError) {
@@ -53,8 +54,8 @@ export class CartResolvers {
     context: GraphQLContext
   ) {
     try {
-      const user = requireCartWrite(context);
-      return await cartService.removeItemFromCart(user.sub, productId);
+      const userId = getCurrentUserId(context);
+      return await cartService.removeItemFromCart(userId, productId);
     } catch (error) {
       console.error("GraphQL removeItemFromCart error:", error);
       if (error instanceof Error && error.message === "Cart not found") {
@@ -71,14 +72,14 @@ export class CartResolvers {
     context: GraphQLContext
   ) {
     try {
-      const user = requireCartWrite(context);
+      const userId = getCurrentUserId(context);
       const { productId, quantity } = input;
 
       if (quantity < 0) {
         throw new UserInputError("Quantity cannot be negative");
       }
 
-      return await cartService.updateItemQuantity(user.sub, productId, quantity);
+      return await cartService.updateItemQuantity(userId, productId, quantity);
     } catch (error) {
       console.error("GraphQL updateItemQuantity error:", error);
       if (error instanceof UserInputError) {
@@ -98,14 +99,14 @@ export class CartResolvers {
     context: GraphQLContext
   ) {
     try {
-      const user = requireCartWrite(context);
+      const userId = getCurrentUserId(context);
       const { productId, decreaseBy = 1 } = input;
 
       if (decreaseBy <= 0) {
         throw new UserInputError("Decrease amount must be positive");
       }
 
-      return await cartService.decreaseItemQuantity(user.sub, productId, decreaseBy);
+      return await cartService.decreaseItemQuantity(userId, productId, decreaseBy);
     } catch (error) {
       console.error("GraphQL decreaseItemQuantity error:", error);
       if (error instanceof UserInputError) {
@@ -121,8 +122,8 @@ export class CartResolvers {
   @RequirePermission("cart_write")
   async clearCart(_: any, __: any, context: GraphQLContext) {
     try {
-      const user = requireCartWrite(context);
-      return await cartService.clearUserCart(user.sub);
+      const userId = getCurrentUserId(context);
+      return await cartService.clearUserCart(userId);
     } catch (error) {
       console.error("GraphQL clearCart error:", error);
       if (error instanceof Error && error.message === "Cart not found") {

@@ -8,28 +8,11 @@ import {
   RequireWalletReadPermission,
   RequireWalletWritePermission,
 } from "../decorators/permissions";
+import { getCurrentUserId } from "../utils/helperFunctions";
 
 const userWalletService = new WalletService();
 
-// Helper function to get current user ID from GraphQL context
-const getCurrentUserId = (context: GraphQLContext): string => {
-  // Try to get user from context.user first (if set by middleware)
-  if (context.user) {
-    return context.user.dbUserId || context.user.sub;
-  }
 
-  // Try to get user from session if available
-  if (context.session?.user) {
-    return context.session.user.dbUserId || context.session.user.sub;
-  }
-
-  // Try to get user from request session
-  if (context.req?.session?.user) {
-    return context.req.session.user.dbUserId || context.req.session.user.sub;
-  }
-
-  return "";
-};
 
 export class WalletResolvers {
   @RequireWalletReadPermission()

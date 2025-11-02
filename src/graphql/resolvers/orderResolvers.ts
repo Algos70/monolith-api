@@ -4,6 +4,7 @@ import {
   RequireOrdersReadPermission, 
   RequireOrdersWritePermission 
 } from "../decorators/permissions";
+import { getCurrentUserId } from "../utils/helperFunctions";
 
 class OrderResolvers {
   private orderService: OrderService;
@@ -15,8 +16,7 @@ class OrderResolvers {
   // Get user's orders
   @RequireOrdersReadPermission()
   async userOrders(_: any, __: any, context: GraphQLContext) {
-    const user = context.user || context.session?.user || context.req?.session?.user;
-    const userId = user?.dbUserId || user?.sub;
+    const userId = getCurrentUserId(context);
 
     if (!userId) {
       throw new Error("User ID not found");
@@ -28,8 +28,7 @@ class OrderResolvers {
   // Get specific order by ID (user can only see their own orders)
   @RequireOrdersReadPermission()
   async userOrder(_: any, { id }: { id: string }, context: GraphQLContext) {
-    const user = context.user || context.session?.user || context.req?.session?.user;
-    const userId = user?.dbUserId || user?.sub;
+    const userId = getCurrentUserId(context);
 
     if (!userId) {
       throw new Error("User ID not found");
@@ -56,8 +55,7 @@ class OrderResolvers {
     { input }: { input: { walletId: string } },
     context: GraphQLContext
   ) {
-    const user = context.user || context.session?.user || context.req?.session?.user;
-    const userId = user?.dbUserId || user?.sub;
+    const userId = getCurrentUserId(context);
 
     if (!userId) {
       throw new Error("User ID not found");

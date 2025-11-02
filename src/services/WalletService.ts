@@ -51,6 +51,12 @@ export interface UserWalletTransferData {
   amountMinor: number;
 }
 
+export interface UserWalletsResult {
+  success: boolean;
+  message: string;
+  wallets: Wallet[];
+}
+
 export class WalletService {
   private walletRepository: WalletRepository;
 
@@ -67,7 +73,10 @@ export class WalletService {
     return await this.walletRepository.findByUserId(userId);
   }
 
-  async findByUserAndCurrency(userId: string, currency: string): Promise<Wallet | null> {
+  async findByUserAndCurrency(
+    userId: string,
+    currency: string
+  ): Promise<Wallet | null> {
     return await this.walletRepository.findByUserAndCurrency(userId, currency);
   }
 
@@ -76,15 +85,22 @@ export class WalletService {
 
     // Validate currency format (ISO 4217)
     if (!currency || currency.length !== 3) {
-      const error = new Error("Currency must be a valid 3-letter ISO 4217 code") as any;
+      const error = new Error(
+        "Currency must be a valid 3-letter ISO 4217 code"
+      ) as any;
       error.code = "INVALID_FORMAT";
       throw error;
     }
 
     // Check if wallet already exists for this user and currency
-    const existingWallet = await this.walletRepository.findByUserAndCurrency(userId, currency);
+    const existingWallet = await this.walletRepository.findByUserAndCurrency(
+      userId,
+      currency
+    );
     if (existingWallet) {
-      const error = new Error(`Wallet already exists for user ${userId} and currency ${currency}`) as any;
+      const error = new Error(
+        `Wallet already exists for user ${userId} and currency ${currency}`
+      ) as any;
       error.code = "DUPLICATE";
       throw error;
     }
@@ -96,7 +112,11 @@ export class WalletService {
       throw error;
     }
 
-    return await this.walletRepository.createWallet(userId, currency, initialBalance);
+    return await this.walletRepository.createWallet(
+      userId,
+      currency,
+      initialBalance
+    );
   }
 
   async deleteWallet(id: string): Promise<void> {
@@ -123,9 +143,15 @@ export class WalletService {
       throw error;
     }
 
-    const wallet = await this.walletRepository.increaseBalance(userId, currency, amountMinor);
+    const wallet = await this.walletRepository.increaseBalance(
+      userId,
+      currency,
+      amountMinor
+    );
     if (!wallet) {
-      const error = new Error(`Wallet not found for user ${userId} and currency ${currency}`) as any;
+      const error = new Error(
+        `Wallet not found for user ${userId} and currency ${currency}`
+      ) as any;
       error.code = "NOT_FOUND";
       throw error;
     }
@@ -133,7 +159,10 @@ export class WalletService {
     return wallet;
   }
 
-  async decreaseBalance(data: BalanceOperationData, manager?: any): Promise<Wallet> {
+  async decreaseBalance(
+    data: BalanceOperationData,
+    manager?: any
+  ): Promise<Wallet> {
     const { userId, currency, amountMinor } = data;
 
     if (amountMinor <= 0) {
@@ -143,9 +172,16 @@ export class WalletService {
     }
 
     try {
-      const wallet = await this.walletRepository.decreaseBalance(userId, currency, amountMinor, manager);
+      const wallet = await this.walletRepository.decreaseBalance(
+        userId,
+        currency,
+        amountMinor,
+        manager
+      );
       if (!wallet) {
-        const error = new Error(`Wallet not found for user ${userId} and currency ${currency}`) as any;
+        const error = new Error(
+          `Wallet not found for user ${userId} and currency ${currency}`
+        ) as any;
         error.code = "NOT_FOUND";
         throw error;
       }
@@ -174,7 +210,12 @@ export class WalletService {
     }
 
     try {
-      await this.walletRepository.transfer(fromUserId, toUserId, currency, amountMinor);
+      await this.walletRepository.transfer(
+        fromUserId,
+        toUserId,
+        currency,
+        amountMinor
+      );
     } catch (error: any) {
       if (error.message.includes("not found")) {
         error.code = "NOT_FOUND";
@@ -190,7 +231,9 @@ export class WalletService {
   }
 
   // Admin panel methods
-  async getWalletsForAdmin(options: WalletListOptions = {}): Promise<WalletListResult> {
+  async getWalletsForAdmin(
+    options: WalletListOptions = {}
+  ): Promise<WalletListResult> {
     const { page = 1, limit = 10, search, currency, userId } = options;
 
     // Get all wallets
@@ -198,18 +241,19 @@ export class WalletService {
 
     // Apply filters
     if (currency) {
-      allWallets = allWallets.filter(wallet => wallet.currency === currency);
+      allWallets = allWallets.filter((wallet) => wallet.currency === currency);
     }
 
     if (userId) {
-      allWallets = allWallets.filter(wallet => wallet.user.id === userId);
+      allWallets = allWallets.filter((wallet) => wallet.user.id === userId);
     }
 
     if (search) {
-      allWallets = allWallets.filter(wallet =>
-        wallet.user.email.toLowerCase().includes(search.toLowerCase()) ||
-        wallet.user.name?.toLowerCase().includes(search.toLowerCase()) ||
-        wallet.currency.toLowerCase().includes(search.toLowerCase())
+      allWallets = allWallets.filter(
+        (wallet) =>
+          wallet.user.email.toLowerCase().includes(search.toLowerCase()) ||
+          wallet.user.name?.toLowerCase().includes(search.toLowerCase()) ||
+          wallet.currency.toLowerCase().includes(search.toLowerCase())
       );
     }
 
@@ -244,7 +288,9 @@ export class WalletService {
   // Update wallet currency (admin only)
   async updateWalletCurrency(id: string, currency: string): Promise<Wallet> {
     if (!currency || currency.length !== 3) {
-      const error = new Error("Currency must be a valid 3-letter ISO 4217 code") as any;
+      const error = new Error(
+        "Currency must be a valid 3-letter ISO 4217 code"
+      ) as any;
       error.code = "INVALID_FORMAT";
       throw error;
     }
@@ -257,9 +303,14 @@ export class WalletService {
     }
 
     // Check if user already has a wallet with this currency
-    const existingWallet = await this.walletRepository.findByUserAndCurrency(wallet.user.id, currency);
+    const existingWallet = await this.walletRepository.findByUserAndCurrency(
+      wallet.user.id,
+      currency
+    );
     if (existingWallet && existingWallet.id !== id) {
-      const error = new Error(`User already has a wallet with currency ${currency}`) as any;
+      const error = new Error(
+        `User already has a wallet with currency ${currency}`
+      ) as any;
       error.code = "DUPLICATE";
       throw error;
     }
@@ -267,14 +318,30 @@ export class WalletService {
     wallet.currency = currency;
     // Note: This would need to be implemented in the repository
     // For now, we'll throw an error as this operation is complex
-    throw new Error("Currency update not implemented - requires database update");
+    throw new Error(
+      "Currency update not implemented - requires database update"
+    );
   }
 
   // User-specific wallet operations (from UserWalletService)
-  
+
   // Get all wallets for a user
-  async getUserWallets(userId: string): Promise<Wallet[]> {
-    return await this.findByUserId(userId);
+  async getUserWallets(userId: string): Promise<UserWalletsResult> {
+    try {
+      const wallets = await this.findByUserId(userId);
+      return {
+        success: true,
+        message: `Found ${wallets.length} wallets for user`,
+        wallets: wallets,
+      };
+    } catch (error) {
+      console.error("Error in WalletService.getUserWallets:", error);
+      return {
+        success: false,
+        message: "Error retrieving user wallets",
+        wallets: [],
+      };
+    }
   }
 
   // Create a new wallet for a user
@@ -289,7 +356,9 @@ export class WalletService {
   }
 
   // Increase balance of user's own wallet
-  async increaseUserWalletBalance(data: UserWalletIncreaseBalanceData): Promise<Wallet> {
+  async increaseUserWalletBalance(
+    data: UserWalletIncreaseBalanceData
+  ): Promise<Wallet> {
     const { userId, walletId, amountMinor } = data;
 
     // Verify wallet belongs to the user
@@ -335,7 +404,9 @@ export class WalletService {
     // Verify user has a wallet with the specified currency
     const fromWallet = await this.findByUserAndCurrency(userId, currency);
     if (!fromWallet) {
-      const error = new Error(`You don't have a wallet with currency ${currency}`) as any;
+      const error = new Error(
+        `You don't have a wallet with currency ${currency}`
+      ) as any;
       error.code = "NOT_FOUND";
       throw error;
     }
@@ -349,7 +420,9 @@ export class WalletService {
     }
 
     if (toWallet.currency !== currency) {
-      const error = new Error("Target wallet must have the same currency") as any;
+      const error = new Error(
+        "Target wallet must have the same currency"
+      ) as any;
       error.code = "INVALID_OPERATION";
       throw error;
     }
@@ -370,12 +443,18 @@ export class WalletService {
   }
 
   // Get user's wallet by currency
-  async getUserWalletByCurrency(userId: string, currency: string): Promise<Wallet | null> {
+  async getUserWalletByCurrency(
+    userId: string,
+    currency: string
+  ): Promise<Wallet | null> {
     return await this.findByUserAndCurrency(userId, currency);
   }
 
   // Get balance for user's wallet by currency
-  async getUserWalletBalance(userId: string, currency: string): Promise<number> {
+  async getUserWalletBalance(
+    userId: string,
+    currency: string
+  ): Promise<number> {
     return await this.getBalance(userId, currency);
   }
 }
