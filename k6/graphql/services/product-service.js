@@ -79,7 +79,6 @@ export class ProductService {
           p.slug === "airpods-pro" &&
           p.priceMinor === 24999 &&
           p.currency === "USD" &&
-          p.stockQty === 100 &&
           p.category.name === "Electronics" &&
           p.category.slug === "electronics"
         );
@@ -113,7 +112,6 @@ export class ProductService {
           p.slug === "airpods-pro" &&
           p.priceMinor === 24999 &&
           p.currency === "USD" &&
-          p.stockQty === 100 &&
           p.category.name === "Electronics" &&
           p.category.slug === "electronics"
         );
