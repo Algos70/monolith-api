@@ -45,13 +45,25 @@ export const orderTypeDefs = `
     pagination: Pagination!
   }
 
+  type UserOrdersResponse {
+    success: Boolean!
+    message: String!
+    orders: [Order!]!
+  }
+
+  type CreateOrderFromCartResponse {
+    success: Boolean!
+    message: String!
+    order: Order
+  }
+
   input CreateOrderFromCartInput {
     walletId: ID!
   }
 
   extend type Query {
     # User Order Queries
-    userOrders: [Order!]!
+    userOrders: UserOrdersResponse!
     
     # Admin Order Queries
     adminOrders(
@@ -68,7 +80,7 @@ export const orderTypeDefs = `
 
   extend type Mutation {
     # User Order Mutations
-    createOrderFromCart(input: CreateOrderFromCartInput!): Order!
+    createOrderFromCart(input: CreateOrderFromCartInput!): CreateOrderFromCartResponse!
     
     # Admin Order Mutations
     adminCreateOrder(input: CreateOrderInput!): Order!

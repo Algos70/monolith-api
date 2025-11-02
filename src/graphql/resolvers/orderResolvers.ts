@@ -16,13 +16,31 @@ class OrderResolvers {
   // Get user's orders
   @RequireOrdersReadPermission()
   async userOrders(_: any, __: any, context: GraphQLContext) {
-    const userId = getCurrentUserId(context);
+    try {
+      const userId = getCurrentUserId(context);
 
-    if (!userId) {
-      throw new Error("User ID not found");
+      if (!userId) {
+        return {
+          success: false,
+          message: "User ID not found",
+          orders: []
+        };
+      }
+
+      const orders = await this.orderService.findByUser(userId);
+      
+      return {
+        success: true,
+        message: "Orders retrieved successfully",
+        orders
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to retrieve orders",
+        orders: []
+      };
     }
-
-    return await this.orderService.findByUser(userId);
   }
 
 
@@ -34,29 +52,43 @@ class OrderResolvers {
     { input }: { input: { walletId: string } },
     context: GraphQLContext
   ) {
-    const userId = getCurrentUserId(context);
-
-    if (!userId) {
-      throw new Error("User ID not found");
-    }
-
-    const { walletId } = input;
-
-    if (!walletId) {
-      throw new Error("walletId is required");
-    }
-
     try {
-      return await this.orderService.createOrderFromCart({
+      const userId = getCurrentUserId(context);
+
+      if (!userId) {
+        return {
+          success: false,
+          message: "User ID not found",
+          order: null
+        };
+      }
+
+      const { walletId } = input;
+
+      if (!walletId) {
+        return {
+          success: false,
+          message: "walletId is required",
+          order: null
+        };
+      }
+
+      const order = await this.orderService.createOrderFromCart({
         userId,
         walletId,
       });
+
+      return {
+        success: true,
+        message: "Order created successfully",
+        order
+      };
     } catch (error) {
-      if (error instanceof Error) {
-        // Re-throw with the same message for consistent error handling
-        throw new Error(error.message);
-      }
-      throw new Error("Failed to create order");
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to create order",
+        order: null
+      };
     }
   }
 }
