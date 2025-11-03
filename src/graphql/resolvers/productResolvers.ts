@@ -25,24 +25,9 @@ export class ProductResolvers {
   }
 
   @RequirePermission("products_read")
-  async product(_: any, { id }: any, context: GraphQLContext) {
-    return await productService.getProductForAdmin(id);
-  }
-
-  @RequirePermission("products_read")
   async productBySlug(_: any, { slug }: any, context: GraphQLContext) {
     return await productService.findBySlug(slug);
   }
-
-  @RequirePermission("products_read")
-  async productsByCategory(
-    _: any,
-    { categoryId }: any,
-    context: GraphQLContext
-  ) {
-    return await productService.findByCategoryId(categoryId);
-  }
-
 
 
   @RequirePermission("products_read")
@@ -76,11 +61,7 @@ const productResolversInstance = new ProductResolvers();
 export const productResolvers = {
   Query: {
     products: productResolversInstance.products.bind(productResolversInstance),
-    product: productResolversInstance.product.bind(productResolversInstance),
     productBySlug: productResolversInstance.productBySlug.bind(
-      productResolversInstance
-    ),
-    productsByCategory: productResolversInstance.productsByCategory.bind(
       productResolversInstance
     ),
 

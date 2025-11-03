@@ -60,8 +60,6 @@ export const categoryTypeDefs = `
     
     # Public/User queries (new standardized format)
     categories(page: Int = 1, limit: Int = 10, search: String): CategoriesResponse!
-    category(id: ID!): CategoryResponse!
-    categoryBySlug(slug: String!): CategoryResponse!
     categoryProducts(slug: String!, page: Int = 1, limit: Int = 10, inStockOnly: Boolean = true): CategoryProductsResponse!
   }
 

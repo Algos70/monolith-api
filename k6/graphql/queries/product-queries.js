@@ -30,60 +30,12 @@ export const PRODUCT_QUERIES = {
     }
   `,
 
-  GET_PRODUCT_BY_ID: `
-    query GetProduct($id: ID!) {
-      product(id: $id) {
-        success
-        message
-        product {
-          id
-          name
-          slug
-          priceMinor
-          currency
-          stockQty
-          createdAt
-          updatedAt
-          category {
-            id
-            name
-            slug
-          }
-        }
-      }
-    }
-  `,
-
   GET_PRODUCT_BY_SLUG: `
     query GetProductBySlug($slug: String!) {
       productBySlug(slug: $slug) {
         success
         message
         product {
-          id
-          name
-          slug
-          priceMinor
-          currency
-          stockQty
-          createdAt
-          updatedAt
-          category {
-            id
-            name
-            slug
-          }
-        }
-      }
-    }
-  `,
-
-  GET_PRODUCTS_BY_CATEGORY: `
-    query GetProductsByCategory($categoryId: ID!) {
-      productsByCategory(categoryId: $categoryId) {
-        success
-        message
-        products {
           id
           name
           slug

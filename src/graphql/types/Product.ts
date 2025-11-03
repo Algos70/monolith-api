@@ -86,9 +86,7 @@ export const productTypeDefs = `
       categoryId: ID
       inStockOnly: Boolean = true
     ): ProductConnection!
-    product(id: ID!): ProductResult!
     productBySlug(slug: String!): ProductResult!
-    productsByCategory(categoryId: ID!): ProductsResult!
 
     featuredProducts(limit: Int = 8): ProductConnection!
     searchProducts(
