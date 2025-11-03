@@ -49,6 +49,18 @@ jobs:
         run: |
           echo "🚀 Running K6 integration tests..."
           k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/auth.test.js
+          k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/categories.test.js
+          k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/products.test.js
+          k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/wallet.test.js
+          k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/cart.test.js
+          k6 run --env BASE_URL=http://localhost:4000/api k6/graphql/auth.test.js
+          k6 run --env BASE_URL=http://localhost:4000/api k6/graphql/categories.test.js
+          k6 run --env BASE_URL=http://localhost:4000/api k6/graphql/products.test.js
+          k6 run --env BASE_URL=http://localhost:4000/api k6/graphql/wallet.test.js
+          k6 run --env BASE_URL=http://localhost:4000/api k6/graphql/cart.test.js
+          k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/order.test.js
+          k6 run --env BASE_URL=http://localhost:4000/api k6/graphql/order.test.js
+
 
       - name: Show logs if failed
         if: failure()
