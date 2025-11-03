@@ -19,8 +19,7 @@ jobs:
           docker version
       
       - name: Build and start all services
-        run: |
-          docker compose up -d --build
+        run: docker compose up -d --build
 
       - name: Wait for Monolith API to be ready
         run: |
@@ -45,22 +44,63 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y k6
 
-      - name: Run K6 integration tests
+      - name: Run K6 integration tests (separate BASE_URLs)
         run: |
           echo "🚀 Running K6 integration tests..."
-          k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/auth.test.js
-          k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/categories.test.js
-          k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/products.test.js
-          k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/wallet.test.js
-          k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/cart.test.js
-          k6 run --env BASE_URL=http://localhost:4000/api k6/rest/auth.test.js
-          k6 run --env BASE_URL=http://localhost:4000/api k6/rest/categories.test.js
-          k6 run --env BASE_URL=http://localhost:4000/api k6/rest/products.test.js
-          k6 run --env BASE_URL=http://localhost:4000/api k6/rest/wallet.test.js
-          k6 run --env BASE_URL=http://localhost:4000/api k6/rest/cart.test.js
-          k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/order.test.js
-          k6 run --env BASE_URL=http://localhost:4000/api k6/rest/order.test.js
+          mkdir -p reports/{summaries,raw}
 
+          # GraphQL testleri
+          graphql_base=http://localhost:4000/graphql
+          declare -a graphql_tests=(
+            "graphql/auth.test.js"
+            "graphql/categories.test.js"
+            "graphql/products.test.js"
+            "graphql/wallet.test.js"
+            "graphql/cart.test.js"
+            "graphql/order.test.js"
+          )
+
+          # REST testleri
+          rest_base=http://localhost:4000/api
+          declare -a rest_tests=(
+            "rest/auth.test.js"
+            "rest/categories.test.js"
+            "rest/products.test.js"
+            "rest/wallet.test.js"
+            "rest/cart.test.js"
+            "rest/order.test.js"
+          )
+
+          set +e  # herhangi biri fail olsa da tüm testleri koş
+          for test in "${graphql_tests[@]}"; do
+            name=$(basename "$test" .js)
+            echo "🧪 GraphQL: $test"
+            k6 run --quiet \
+              --summary-export=reports/summaries/${name}.summary.json \
+              --out json=reports/raw/${name}.raw.json \
+              --env BASE_URL=$graphql_base \
+              k6/$test || echo "❌ Failed: $test"
+          done
+
+          for test in "${rest_tests[@]}"; do
+            name=$(basename "$test" .js)
+            echo "🧪 REST: $test"
+            k6 run --quiet \
+              --summary-export=reports/summaries/${name}.summary.json \
+              --out json=reports/raw/${name}.raw.json \
+              --env BASE_URL=$rest_base \
+              k6/$test || echo "❌ Failed: $test"
+          done
+          set -e
+
+      - name: Upload K6 reports (only if failed)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-test-reports
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Show logs if failed
         if: failure()
