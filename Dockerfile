@@ -16,6 +16,8 @@ WORKDIR /app
 
 # 3. Build çıktısını ve bağımlılıkları taşı
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/typeorm.config.prod.js ./typeorm.config.js
 COPY package*.json ./
 RUN npm ci --omit=dev
 
@@ -23,5 +25,5 @@ RUN npm ci --omit=dev
 ENV PORT=4000
 EXPOSE 4000
 
-# 5. Server'ı başlat
-CMD ["node", "dist/src/index.js"]
+# 5. Server'ı başlat (npm script ile migration ve seeding dahil)
+CMD ["npm", "start"]
