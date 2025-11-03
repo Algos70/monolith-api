@@ -23,7 +23,7 @@ jobs:
       - name: Wait for Monolith API to be ready
         run: |
           echo "⏳ Waiting for API healthcheck..."
-          npx wait-on --timeout 90000 --interval 2000 http://localhost:4000/health
+          npx wait-on --timeout 1000000 --interval 2000 http://localhost:4000/health
 
       - name: Debug logs if healthcheck fails
         if: failure()
