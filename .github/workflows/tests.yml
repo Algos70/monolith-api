@@ -53,13 +53,13 @@ jobs:
           k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/products.test.js
           k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/wallet.test.js
           k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/cart.test.js
-          k6 run --env BASE_URL=http://localhost:4000/api k6/graphql/auth.test.js
-          k6 run --env BASE_URL=http://localhost:4000/api k6/graphql/categories.test.js
-          k6 run --env BASE_URL=http://localhost:4000/api k6/graphql/products.test.js
-          k6 run --env BASE_URL=http://localhost:4000/api k6/graphql/wallet.test.js
-          k6 run --env BASE_URL=http://localhost:4000/api k6/graphql/cart.test.js
+          k6 run --env BASE_URL=http://localhost:4000/api k6/rest/auth.test.js
+          k6 run --env BASE_URL=http://localhost:4000/api k6/rest/categories.test.js
+          k6 run --env BASE_URL=http://localhost:4000/api k6/rest/products.test.js
+          k6 run --env BASE_URL=http://localhost:4000/api k6/rest/wallet.test.js
+          k6 run --env BASE_URL=http://localhost:4000/api k6/rest/cart.test.js
           k6 run --env BASE_URL=http://localhost:4000/graphql k6/graphql/order.test.js
-          k6 run --env BASE_URL=http://localhost:4000/api k6/graphql/order.test.js
+          k6 run --env BASE_URL=http://localhost:4000/api k6/rest/order.test.js
 
 
       - name: Show logs if failed
