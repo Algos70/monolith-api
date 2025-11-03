@@ -19,7 +19,14 @@ export default async function () {
   // Run comprehensive category workflow test
   await categoryService.runCategoryWorkflowTest("electronics");
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
+  
+  // Run edge case tests
+  await categoryService.runEdgeCaseTests();
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
+  // Run comprehensive negative tests
+  await categoryService.runNegativeTests();
+  sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
   console.log("REST Category Tests Completed");
 }

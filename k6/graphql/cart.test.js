@@ -1,7 +1,9 @@
 
 import { sleep } from "k6";
 import { CartService } from "./services/cart-service.js";
-import { ProductService } from "./services/product-service.js";
+import { ProductService } from "../shared/product-service.js";
+import { GraphQLClient } from "./utils/graphql-client.js";
+import { PRODUCT_QUERIES } from "./queries/product-queries.js";
 import { TEST_CONFIG } from "../config/test-config.js";
 import { setupAuth } from "./utils/test-base.js";
 
@@ -14,8 +16,10 @@ export default async function () {
   const { user, sessionHeaders, cleanup } = setupAuth();
 
   // Create services with authenticated session
+  const client = new GraphQLClient();
   const cartService = new CartService(undefined, sessionHeaders);
-  const productService = new ProductService(undefined, sessionHeaders);
+  const productService = new ProductService(client, PRODUCT_QUERIES);
+  productService.setSessionHeaders(sessionHeaders);
 
   // Run comprehensive cart workflow test - this covers all cart operations
   // Uses real product "airpods-pro" from the database
