@@ -39,8 +39,22 @@ export const productTypeDefs = `
   }
 
   type ProductConnection {
+    success: Boolean!
+    message: String!
     products: [Product!]!
     pagination: Pagination!
+  }
+
+  type ProductResult {
+    success: Boolean!
+    message: String!
+    product: Product
+  }
+
+  type ProductsResult {
+    success: Boolean!
+    message: String!
+    products: [Product!]!
   }
 
   type StockCheckResult {
@@ -48,12 +62,7 @@ export const productTypeDefs = `
     requiredQty: Int!
   }
 
-  type ProductAvailability {
-    productId: ID!
-    available: Boolean!
-    requiredQty: Int!
-    stockQty: Int!
-  }
+
 
   extend type Query {
     # Admin queries
@@ -64,7 +73,7 @@ export const productTypeDefs = `
       categoryId: ID
       inStockOnly: Boolean
     ): ProductConnection!
-    adminProduct(id: ID!): Product
+    adminProduct(id: ID!): ProductResult!
     adminProductBySlug(slug: String!): Product
     adminProductsByCategory(categoryId: ID!): [Product!]!
     adminProductStockCheck(id: ID!, qty: Int = 1): StockCheckResult!
@@ -77,10 +86,8 @@ export const productTypeDefs = `
       categoryId: ID
       inStockOnly: Boolean = true
     ): ProductConnection!
-    product(id: ID!): Product!
-    productBySlug(slug: String!): Product!
-    productsByCategory(categoryId: ID!): [Product!]!
-    productAvailability(id: ID!, qty: Int = 1): ProductAvailability!
+    productBySlug(slug: String!): ProductResult!
+
     featuredProducts(limit: Int = 8): ProductConnection!
     searchProducts(
       search: String

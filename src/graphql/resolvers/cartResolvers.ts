@@ -1,6 +1,7 @@
 import { CartService } from "../../services/CartService";
-import { requireCartRead, requireCartWrite, UserInputError, type GraphQLContext } from "../utils/permissions";
+import { UserInputError, type GraphQLContext } from "../utils/permissions";
 import { RequirePermission } from "../decorators/permissions";
+import { getCurrentUserId } from "../utils/helperFunctions";
 
 const cartService = new CartService();
 
@@ -8,11 +9,15 @@ export class CartResolvers {
   @RequirePermission("cart_read")
   async userCart(_: any, __: any, context: GraphQLContext) {
     try {
-      const user = requireCartRead(context);
-      return await cartService.getUserCart(user.sub);
+      const userId = getCurrentUserId(context);
+      return await cartService.getUserCart(userId);
     } catch (error) {
       console.error("GraphQL userCart error:", error);
-      throw new Error("Failed to fetch cart");
+      return {
+        success: false,
+        message: "Failed to fetch cart",
+        cartItems: []
+      };
     }
   }
 
@@ -23,26 +28,27 @@ export class CartResolvers {
     context: GraphQLContext
   ) {
     try {
-      const user = requireCartWrite(context);
+      const userId = getCurrentUserId(context);
       const { productId, quantity } = input;
 
       if (!productId || !quantity || quantity <= 0) {
-        throw new UserInputError("Product ID and valid quantity are required");
+        return {
+          success: false,
+          message: "Product ID and valid quantity are required",
+          cartItem: null
+        };
       }
 
-      return await cartService.addItemToCart(user.sub, productId, quantity);
+      const result = await cartService.addItemToCart(userId, productId, quantity);
+      
+      return result;
     } catch (error) {
       console.error("GraphQL addItemToCart error:", error);
-      if (error instanceof UserInputError) {
-        throw error;
-      }
-      if (error instanceof Error && error.message.includes("not found")) {
-        throw new UserInputError(error.message);
-      }
-      if (error instanceof Error && error.message.includes("currency")) {
-        throw new UserInputError(error.message);
-      }
-      throw new Error("Failed to add item to cart");
+      return {
+        success: false,
+        message: "Failed to add item to cart",
+        cartItem: null
+      };
     }
   }
 
@@ -53,14 +59,17 @@ export class CartResolvers {
     context: GraphQLContext
   ) {
     try {
-      const user = requireCartWrite(context);
-      return await cartService.removeItemFromCart(user.sub, productId);
+      const userId = getCurrentUserId(context);
+      const result = await cartService.removeItemFromCart(userId, productId);
+      
+      return result;
     } catch (error) {
       console.error("GraphQL removeItemFromCart error:", error);
-      if (error instanceof Error && error.message === "Cart not found") {
-        throw new UserInputError(error.message);
-      }
-      throw new Error("Failed to remove item from cart");
+      return {
+        success: false,
+        message: "Failed to remove item from cart",
+        cartItem: null
+      };
     }
   }
 
@@ -71,23 +80,25 @@ export class CartResolvers {
     context: GraphQLContext
   ) {
     try {
-      const user = requireCartWrite(context);
+      const userId = getCurrentUserId(context);
       const { productId, quantity } = input;
 
       if (quantity < 0) {
-        throw new UserInputError("Quantity cannot be negative");
+        return {
+          success: false,
+          message: "Quantity cannot be negative"
+        };
       }
 
-      return await cartService.updateItemQuantity(user.sub, productId, quantity);
+      const result = await cartService.updateItemQuantity(userId, productId, quantity);
+      
+      return result;
     } catch (error) {
       console.error("GraphQL updateItemQuantity error:", error);
-      if (error instanceof UserInputError) {
-        throw error;
-      }
-      if (error instanceof Error && error.message === "Cart not found") {
-        throw new UserInputError(error.message);
-      }
-      throw new Error("Failed to update item quantity");
+      return {
+        success: false,
+        message: "Failed to update item quantity"
+      };
     }
   }
 
@@ -98,37 +109,41 @@ export class CartResolvers {
     context: GraphQLContext
   ) {
     try {
-      const user = requireCartWrite(context);
+      const userId = getCurrentUserId(context);
       const { productId, decreaseBy = 1 } = input;
 
       if (decreaseBy <= 0) {
-        throw new UserInputError("Decrease amount must be positive");
+        return {
+          success: false,
+          message: "Decrease amount must be positive"
+        };
       }
 
-      return await cartService.decreaseItemQuantity(user.sub, productId, decreaseBy);
+      const result = await cartService.decreaseItemQuantity(userId, productId, decreaseBy);
+      
+      return result;
     } catch (error) {
       console.error("GraphQL decreaseItemQuantity error:", error);
-      if (error instanceof UserInputError) {
-        throw error;
-      }
-      if (error instanceof Error && (error.message === "Cart not found" || error.message === "Item not found in cart")) {
-        throw new UserInputError(error.message);
-      }
-      throw new Error("Failed to decrease item quantity");
+      return {
+        success: false,
+        message: "Failed to decrease item quantity"
+      };
     }
   }
 
   @RequirePermission("cart_write")
   async clearCart(_: any, __: any, context: GraphQLContext) {
     try {
-      const user = requireCartWrite(context);
-      return await cartService.clearUserCart(user.sub);
+      const userId = getCurrentUserId(context);
+      const result = await cartService.clearUserCart(userId);
+      
+      return result;
     } catch (error) {
       console.error("GraphQL clearCart error:", error);
-      if (error instanceof Error && error.message === "Cart not found") {
-        throw new UserInputError(error.message);
-      }
-      throw new Error("Failed to clear cart");
+      return {
+        success: false,
+        message: "Failed to clear cart"
+      };
     }
   }
 }

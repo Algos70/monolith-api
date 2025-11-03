@@ -1,5 +1,5 @@
 import { Repository } from "typeorm";
-import { AppDataSource } from "../data-source";
+import { AppDataSource } from "./data-source";
 import { Category } from "../entities/Category";
 
 export class CategoryRepository {
@@ -10,10 +10,15 @@ export class CategoryRepository {
   }
 
   async findById(id: string): Promise<Category | null> {
-    return await this.repository.findOne({
-      where: { id },
-      relations: ["products", "products.category"]
-    });
+    try {
+      return await this.repository.findOne({
+        where: { id },
+        relations: ["products", "products.category"]
+      });
+    } catch (error) {
+      // If there's a database error (like invalid UUID format), return null
+      return null;
+    }
   }
 
   async findBySlug(slug: string): Promise<Category | null> {

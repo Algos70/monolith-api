@@ -1,3 +1,3 @@
-import { AppDataSource } from "./src/data-source";
+import { AppDataSource } from "./src/repositories/data-source";
 
 export default AppDataSource;

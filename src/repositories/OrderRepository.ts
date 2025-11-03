@@ -1,5 +1,5 @@
 import { Repository } from "typeorm";
-import { AppDataSource } from "../data-source";
+import { AppDataSource } from "./data-source";
 import { Order } from "../entities/Order";
 import { OrderItem } from "../entities/OrderItem";
 

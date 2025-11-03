@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { entities } from "./entities";
+import { resolve } from "path";
+import { entities } from "../entities";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -14,7 +15,7 @@ export const AppDataSource = new DataSource({
   entities: entities,
   migrations: [
     process.env.NODE_ENV === "production"
-      ? "dist/migrations/*.js"
-      : "migrations/*.ts",
+      ? resolve(process.cwd(), "dist/migrations/*.js") 
+      : resolve(process.cwd(), "migrations/*.ts"),
   ],
 });

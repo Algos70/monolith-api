@@ -11,46 +11,15 @@ export class CategoryResolvers {
     { page = 1, limit = 10, search }: any,
     context: GraphQLContext
   ) {
-    try {
-      return await categoryService.getCategoriesForAdmin({
-        page,
-        limit,
-        search,
-      });
-    } catch (error) {
-      console.error("GraphQL categories error:", error);
-      throw new Error("Failed to fetch categories");
-    }
-  }
-
-  @RequirePermission("categories_read")
-  async category(_: any, { id }: any, context: GraphQLContext) {
-    try {
-      return await categoryService.getCategoryWithProductsForAdmin(id);
-    } catch (error) {
-      console.error("GraphQL category error:", error);
-      if (error instanceof Error && error.message === "Category not found") {
-        throw new UserInputError(error.message);
-      }
-      throw new Error("Failed to fetch category");
-    }
-  }
-
-  @RequirePermission("categories_read")
-  async categoryBySlug(_: any, { slug }: any, context: GraphQLContext) {
-    try {
-      const category = await categoryService.findBySlug(slug);
-      if (!category) {
-        throw new UserInputError("Category not found");
-      }
-      return category;
-    } catch (error) {
-      console.error("GraphQL categoryBySlug error:", error);
-      if (error instanceof UserInputError) {
-        throw error;
-      }
-      throw new Error("Failed to fetch category");
-    }
+    // Validate and sanitize input parameters at GraphQL level
+    const sanitizedPage = Math.max(1, page || 1);
+    const sanitizedLimit = Math.max(1, Math.min(100, limit || 10));
+    
+    return await categoryService.getCategoriesForAdmin({
+      page: sanitizedPage,
+      limit: sanitizedLimit,
+      search,
+    });
   }
 
   @RequirePermission("categories_read")
@@ -59,27 +28,22 @@ export class CategoryResolvers {
     { slug, page = 1, limit = 10, inStockOnly = true }: any,
     context: GraphQLContext
   ) {
-    try {
-      // First find the category by slug
-      const category = await categoryService.findBySlug(slug);
-      
-      if (!category) {
-        throw new UserInputError("Category not found");
-      }
-
-      // Get paginated products using the new method
-      return await categoryService.getCategoryProductsPaginated(category.id, {
-        page,
-        limit,
-        inStockOnly,
-      });
-    } catch (error) {
-      console.error("GraphQL categoryProducts error:", error);
-      if (error instanceof UserInputError) {
-        throw error;
-      }
-      throw new Error("Failed to fetch category products");
+    // First find the category by slug
+    const categoryResult = await categoryService.getCategoryBySlug(slug);
+    
+    if (!categoryResult.success || !categoryResult.category) {
+      return {
+        success: false,
+        message: categoryResult.message,
+      };
     }
+
+    // Get paginated products using the new method
+    return await categoryService.getCategoryProductsPaginated(categoryResult.category.id, {
+      page,
+      limit,
+      inStockOnly,
+    });
   }
 }
 
@@ -89,12 +53,6 @@ const categoryResolversInstance = new CategoryResolvers();
 export const categoryResolvers = {
   Query: {
     categories: categoryResolversInstance.categories.bind(
-      categoryResolversInstance
-    ),
-    category: categoryResolversInstance.category.bind(
-      categoryResolversInstance
-    ),
-    categoryBySlug: categoryResolversInstance.categoryBySlug.bind(
       categoryResolversInstance
     ),
     categoryProducts: categoryResolversInstance.categoryProducts.bind(

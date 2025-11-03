@@ -4,6 +4,7 @@ import {
   RequireOrdersReadPermission, 
   RequireOrdersWritePermission 
 } from "../decorators/permissions";
+import { getCurrentUserId } from "../utils/helperFunctions";
 
 class OrderResolvers {
   private orderService: OrderService;
@@ -15,39 +16,34 @@ class OrderResolvers {
   // Get user's orders
   @RequireOrdersReadPermission()
   async userOrders(_: any, __: any, context: GraphQLContext) {
-    const user = context.user || context.session?.user || context.req?.session?.user;
-    const userId = user?.dbUserId || user?.sub;
+    try {
+      const userId = getCurrentUserId(context);
 
-    if (!userId) {
-      throw new Error("User ID not found");
+      if (!userId) {
+        return {
+          success: false,
+          message: "User ID not found",
+          orders: []
+        };
+      }
+
+      const orders = await this.orderService.findByUser(userId);
+      
+      return {
+        success: true,
+        message: "Orders retrieved successfully",
+        orders
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to retrieve orders",
+        orders: []
+      };
     }
-
-    return await this.orderService.findByUser(userId);
   }
 
-  // Get specific order by ID (user can only see their own orders)
-  @RequireOrdersReadPermission()
-  async userOrder(_: any, { id }: { id: string }, context: GraphQLContext) {
-    const user = context.user || context.session?.user || context.req?.session?.user;
-    const userId = user?.dbUserId || user?.sub;
 
-    if (!userId) {
-      throw new Error("User ID not found");
-    }
-
-    const order = await this.orderService.findById(id);
-    
-    if (!order) {
-      throw new Error("Order not found");
-    }
-
-    // Check if the order belongs to the current user
-    if (order.user.id !== userId) {
-      throw new Error("Access denied");
-    }
-
-    return order;
-  }
 
   // Create new order from cart
   @RequireOrdersWritePermission()
@@ -56,30 +52,43 @@ class OrderResolvers {
     { input }: { input: { walletId: string } },
     context: GraphQLContext
   ) {
-    const user = context.user || context.session?.user || context.req?.session?.user;
-    const userId = user?.dbUserId || user?.sub;
-
-    if (!userId) {
-      throw new Error("User ID not found");
-    }
-
-    const { walletId } = input;
-
-    if (!walletId) {
-      throw new Error("walletId is required");
-    }
-
     try {
-      return await this.orderService.createOrderFromCart({
+      const userId = getCurrentUserId(context);
+
+      if (!userId) {
+        return {
+          success: false,
+          message: "User ID not found",
+          order: null
+        };
+      }
+
+      const { walletId } = input;
+
+      if (!walletId) {
+        return {
+          success: false,
+          message: "walletId is required",
+          order: null
+        };
+      }
+
+      const order = await this.orderService.createOrderFromCart({
         userId,
         walletId,
       });
+
+      return {
+        success: true,
+        message: "Order created successfully",
+        order
+      };
     } catch (error) {
-      if (error instanceof Error) {
-        // Re-throw with the same message for consistent error handling
-        throw new Error(error.message);
-      }
-      throw new Error("Failed to create order");
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to create order",
+        order: null
+      };
     }
   }
 }
@@ -89,7 +98,6 @@ const orderResolversInstance = new OrderResolvers();
 export const orderResolvers = {
   Query: {
     userOrders: orderResolversInstance.userOrders.bind(orderResolversInstance),
-    userOrder: orderResolversInstance.userOrder.bind(orderResolversInstance),
   },
   Mutation: {
     createOrderFromCart: orderResolversInstance.createOrderFromCart.bind(orderResolversInstance),

@@ -24,7 +24,7 @@ export class GraphQLRateLimitPlugin implements ApolloServerPlugin {
         product: { windowMs: 60000, maxRequests: 1200 },
         productBySlug: { windowMs: 60000, maxRequests: 1200 },
         productsByCategory: { windowMs: 60000, maxRequests: 900 },
-        productAvailability: { windowMs: 60000, maxRequests: 600 },
+
         featuredProducts: { windowMs: 60000, maxRequests: 300 },
         searchProducts: { windowMs: 60000, maxRequests: 600 },
 
@@ -36,7 +36,6 @@ export class GraphQLRateLimitPlugin implements ApolloServerPlugin {
         // USER OPERATIONS - Moderate limits
         userCart: { windowMs: 60000, maxRequests: 600 },
         userOrders: { windowMs: 60000, maxRequests: 300 },
-        userOrder: { windowMs: 60000, maxRequests: 450 },
         userWallets: { windowMs: 60000, maxRequests: 300 },
         userWalletByCurrency: { windowMs: 60000, maxRequests: 450 },
         userWalletBalance: { windowMs: 60000, maxRequests: 300 },

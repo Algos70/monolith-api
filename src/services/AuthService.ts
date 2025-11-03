@@ -215,7 +215,7 @@ export class AuthService {
       clientId: string;
       clientSecret: string;
     }
-  ): Promise<{ success: boolean; message: string; user: any }> {
+  ): Promise<{ success: boolean; message: string; user?: any }> {
     try {
       const { username, password } = credentials;
 
@@ -242,7 +242,10 @@ export class AuthService {
       );
 
       if (tokenResponse.status !== 200) {
-        throw new Error("Invalid username or password");
+        return {
+          success: false,
+          message: "Invalid username or password"
+        };
       }
 
       const tokens = tokenResponse.data;
@@ -266,18 +269,25 @@ export class AuthService {
 
       if (error.response?.status === 401) {
         console.error("🚫 Authentication failed - Invalid credentials");
-        throw new Error("Invalid username or password");
+        return {
+          success: false,
+          message: "Invalid username or password"
+        };
       }
 
       if (error.response?.status === 403) {
-        console.error("🚫 Access forbidden - Check client configuration");
-        throw new Error(
-          "Access forbidden. Check Keycloak client configuration."
-        );
+        console.error("�n Access forbidden - Check client configuration");
+        return {
+          success: false,
+          message: "Access forbidden. Check Keycloak client configuration."
+        };
       }
 
       console.error("💥 Unexpected login error:", error);
-      throw new Error("Login failed");
+      return {
+        success: false,
+        message: "Login failed"
+      };
     }
   }
 
@@ -310,6 +320,7 @@ export class AuthService {
       return {
         success: true,
         message: "Logged out successfully",
+        
       };
     } catch (error) {
       console.error("Logout error:", error);
@@ -319,29 +330,6 @@ export class AuthService {
         success: true,
         message: "Logged out successfully",
       };
-    }
-  }
-
-  // Refresh user tokens
-  async refreshUserToken(
-    refreshToken: string
-  ): Promise<{ success: boolean; message: string; user?: any }> {
-    try {
-      // Refresh token using confidential client
-      const tokenData = await this.refreshToken(refreshToken);
-
-      return {
-        success: true,
-        message: "Token refreshed successfully",
-        user: {
-          access_token: tokenData.access_token,
-          refresh_token: tokenData.refresh_token,
-          id_token: tokenData.id_token,
-        },
-      };
-    } catch (error) {
-      console.error("Token refresh error:", error);
-      throw new Error("Token refresh failed");
     }
   }
 
@@ -456,32 +444,44 @@ export class AuthService {
 
       // Handle specific Keycloak errors
       if (error.response?.status === 409) {
-        throw new Error("User already exists");
+        return {
+          success: false,
+          message: "User already exists"
+        };
       }
 
       if (error.response?.status === 401) {
-        throw new Error(
-          "Admin authentication failed. Check client configuration."
-        );
+        return {
+          success: false,
+          message: "Admin authentication failed. Check client configuration."
+        };
       }
 
       if (error.response?.status === 403) {
-        throw new Error(
-          "Client lacks required permissions. Assign manage-users role to service account."
-        );
+        return {
+          success: false,
+          message: "Client lacks required permissions. Assign manage-users role to service account."
+        };
       }
 
       if (error.response?.data?.error === "unauthorized_client") {
-        throw new Error(
-          "Client configuration error: Enable service accounts and assign manage-users role."
-        );
+        return {
+          success: false,
+          message: "Client configuration error: Enable service accounts and assign manage-users role."
+        };
       }
 
       if (error.response?.data?.errorMessage) {
-        throw new Error(error.response.data.errorMessage);
+        return {
+          success: false,
+          message: error.response.data.errorMessage
+        };
       }
 
-      throw new Error("Registration failed");
+      return {
+        success: false,
+        message: "Registration failed"
+      };
     }
   }
 }

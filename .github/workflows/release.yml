@@ -4,11 +4,10 @@ on:
   push:
     branches:
       - main
-      - dev
 
 permissions:
   contents: write
-  packages: write 
+  packages: write
 
 jobs:
   release:
@@ -31,12 +30,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Docker image locally (so plugin can find it)
+      - name: Build Docker image locally (for semantic-release plugin)
         run: docker build -t ${{ env.OWNER_LC }}/monolith-api:latest .
-  
+
       - name: Login to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ env.OWNER_LC }} --password-stdin
-      
+
       - name: Clean npm cache
         run: npm cache clean --force
 
@@ -47,3 +46,24 @@ jobs:
           DOCKER_USERNAME: ${{ github.actor }}
           DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
+
+  
+  keycloak-image:
+    runs-on: ubuntu-latest
+    needs: release # monolith-api push edildikten sonra çalışır
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set lowercase owner
+        id: vars
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ env.OWNER_LC }} --password-stdin
+
+      - name: Build Keycloak image with realm import
+        run: docker build -f Dockerfile.keycloak -t ghcr.io/${{ env.OWNER_LC }}/keycloak-shop:latest .
+
+      - name: Push Keycloak image to GHCR
+        run: docker push ghcr.io/${{ env.OWNER_LC }}/keycloak-shop:latest

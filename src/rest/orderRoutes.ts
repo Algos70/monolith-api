@@ -21,51 +21,31 @@ router.get(
       const userId = user.sub || user.id;
 
       if (!userId) {
-        return res.status(401).json({ error: "User ID not found in session" });
+        return res.status(400).json({ 
+          success: false,
+          message: "User ID not found",
+          orders: []
+        });
       }
 
       const orders = await orderService.findByUser(userId);
-      res.json(orders);
+      res.json({
+        success: true,
+        message: "Orders retrieved successfully",
+        orders
+      });
     } catch (error) {
       console.error("Get user orders error:", error);
-      res.status(500).json({ error: "Failed to fetch orders" });
+      res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to retrieve orders",
+        orders: []
+      });
     }
   }
 );
 
-// GET /orders/:id - Get specific order by ID (user can only see their own orders)
-router.get(
-  "/:id",
-  rateLimitMiddleware.createIPRateLimit({ maxRequests: 450, message: "Too many order detail requests" }),
-  requireOrdersReadPermission,
-  async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const user = SessionService.getUser(req);
-      const userId = user.sub || user.id;
 
-      if (!userId) {
-        return res.status(401).json({ error: "User ID not found in session" });
-      }
-
-      const order = await orderService.findById(id);
-
-      if (!order) {
-        return res.status(404).json({ error: "Order not found" });
-      }
-
-      // Check if the order belongs to the current user
-      if (order.user.id !== userId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      res.json(order);
-    } catch (error) {
-      console.error("Get order error:", error);
-      res.status(500).json({ error: "Failed to fetch order" });
-    }
-  }
-);
 
 // POST /orders - Create new order from cart
 router.post(
@@ -79,11 +59,19 @@ router.post(
       const userId = user.sub || user.id;
 
       if (!userId) {
-        return res.status(401).json({ error: "User ID not found in session" });
+        return res.status(400).json({ 
+          success: false,
+          message: "User ID not found",
+          order: null
+        });
       }
 
       if (!walletId) {
-        return res.status(400).json({ error: "walletId is required" });
+        return res.status(400).json({ 
+          success: false,
+          message: "walletId is required",
+          order: null
+        });
       }
 
       const order = await orderService.createOrderFromCart({
@@ -91,35 +79,18 @@ router.post(
         walletId,
       });
 
-      res.status(201).json(order);
+      res.status(201).json({
+        success: true,
+        message: "Order created successfully",
+        order
+      });
     } catch (error) {
       console.error("Create order error:", error);
-
-      if (error instanceof Error) {
-        if (error.message.includes("Cart is empty")) {
-          return res.status(400).json({ error: error.message });
-        }
-        if (error.message.includes("Insufficient stock")) {
-          return res.status(400).json({ error: error.message });
-        }
-        if (error.message.includes("Insufficient balance")) {
-          return res.status(400).json({ error: error.message });
-        }
-        if (
-          error.message.includes("currency") &&
-          error.message.includes("does not match")
-        ) {
-          return res.status(400).json({ error: error.message });
-        }
-        if (error.message.includes("does not belong to user")) {
-          return res.status(403).json({ error: error.message });
-        }
-        if (error.message.includes("not found")) {
-          return res.status(404).json({ error: error.message });
-        }
-      }
-
-      res.status(500).json({ error: "Failed to create order" });
+      res.status(400).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to create order",
+        order: null
+      });
     }
   }
 );

@@ -24,10 +24,17 @@ router.get(
       const userId = user.sub;
 
       const cart = await cartService.getUserCart(userId);
-      res.json(cart);
+      res.json({
+        success: true,
+        message: "Cart fetched successfully",
+        cart
+      });
     } catch (error) {
       console.error("Get user cart error:", error);
-      res.status(500).json({ error: "Failed to fetch cart" });
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to fetch cart" 
+      });
     }
   }
 );
@@ -48,21 +55,31 @@ router.post(
 
       if (!productId || !quantity || quantity <= 0) {
         return res.status(400).json({
-          error: "Product ID and valid quantity are required",
+          success: false,
+          message: "Product ID and valid quantity are required",
         });
       }
 
-      const cart = await cartService.addItemToCart(userId, productId, quantity);
-      res.json(cart);
+      const result = await cartService.addItemToCart(userId, productId, quantity);
+      res.json(result);
     } catch (error) {
       console.error("Add item to cart error:", error);
       if (error instanceof Error && error.message.includes("not found")) {
-        return res.status(404).json({ error: error.message });
+        return res.status(404).json({ 
+          success: false,
+          message: error.message 
+        });
       }
       if (error instanceof Error && error.message.includes("currency")) {
-        return res.status(400).json({ error: error.message });
+        return res.status(400).json({ 
+          success: false,
+          message: error.message 
+        });
       }
-      res.status(500).json({ error: "Failed to add item to cart" });
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to add item to cart" 
+      });
     }
   }
 );
@@ -81,14 +98,20 @@ router.delete(
       const userId = user.sub;
       const { productId } = req.params;
 
-      const cart = await cartService.removeItemFromCart(userId, productId);
-      res.json(cart);
+      const result = await cartService.removeItemFromCart(userId, productId);
+      res.json(result);
     } catch (error) {
       console.error("Remove item from cart error:", error);
       if (error instanceof Error && error.message === "Cart not found") {
-        return res.status(404).json({ error: error.message });
+        return res.status(404).json({ 
+          success: false,
+          message: error.message 
+        });
       }
-      res.status(500).json({ error: "Failed to remove item from cart" });
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to remove item from cart" 
+      });
     }
   }
 );
@@ -108,30 +131,44 @@ router.put(
       const { productId } = req.params;
       const { quantity } = req.body;
 
-      if (!quantity || quantity < 0) {
+      if (quantity === undefined || quantity === null) {
         return res.status(400).json({
-          error: "Valid quantity is required",
+          success: false,
+          message: "Valid quantity is required",
         });
       }
 
-      const cart = await cartService.updateItemQuantity(
+      if (quantity < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Quantity cannot be negative",
+        });
+      }
+
+      const result = await cartService.updateItemQuantity(
         userId,
         productId,
         quantity
       );
-      res.json(cart);
+      res.json(result);
     } catch (error) {
       console.error("Update item quantity error:", error);
       if (error instanceof Error && error.message === "Cart not found") {
-        return res.status(404).json({ error: error.message });
+        return res.status(404).json({ 
+          success: false,
+          message: error.message 
+        });
       }
-      res.status(500).json({ error: "Failed to update item quantity" });
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to update item quantity" 
+      });
     }
   }
 );
 
-// PATCH /cart/items/:productId/decrease - Decrease item quantity in current user's cart
-router.patch(
+// PUT /cart/items/:productId/decrease - Decrease item quantity in current user's cart
+router.put(
   "/items/:productId/decrease",
   rateLimitMiddleware.createIPRateLimit({
     maxRequests: 150,
@@ -145,14 +182,21 @@ router.patch(
       const { productId } = req.params;
       const { decreaseBy } = req.body;
 
+      if (decreaseBy !== undefined && decreaseBy <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Decrease amount must be positive",
+        });
+      }
+
       const decreaseAmount = decreaseBy && decreaseBy > 0 ? decreaseBy : 1;
 
-      const cart = await cartService.decreaseItemQuantity(
+      const result = await cartService.decreaseItemQuantity(
         userId,
         productId,
         decreaseAmount
       );
-      res.json(cart);
+      res.json(result);
     } catch (error) {
       console.error("Decrease item quantity error:", error);
       if (
@@ -160,9 +204,15 @@ router.patch(
         (error.message === "Cart not found" ||
           error.message === "Item not found in cart")
       ) {
-        return res.status(404).json({ error: error.message });
+        return res.status(404).json({ 
+          success: false,
+          message: error.message 
+        });
       }
-      res.status(500).json({ error: "Failed to decrease item quantity" });
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to decrease item quantity" 
+      });
     }
   }
 );
@@ -180,17 +230,20 @@ router.delete(
       const user = SessionService.getUser(req);
       const userId = user.sub;
 
-      const cart = await cartService.clearUserCart(userId);
-      res.json({
-        message: "Cart cleared successfully",
-        cart,
-      });
+      const result = await cartService.clearUserCart(userId);
+      res.json(result);
     } catch (error) {
       console.error("Clear cart error:", error);
       if (error instanceof Error && error.message === "Cart not found") {
-        return res.status(404).json({ error: error.message });
+        return res.status(404).json({ 
+          success: false,
+          message: error.message 
+        });
       }
-      res.status(500).json({ error: "Failed to clear cart" });
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to clear cart" 
+      });
     }
   }
 );

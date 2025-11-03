@@ -23,6 +23,44 @@ export interface CategoryListResult {
   };
 }
 
+// Standardized response interfaces
+export interface CategoryResponse {
+  success: boolean;
+  message: string;
+  category?: Category;
+}
+
+export interface CategoriesResponse {
+  success: boolean;
+  message: string;
+  categories?: Category[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface CategoryProductsResponse {
+  success: boolean;
+  message: string;
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  products?: any[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 export class CategoryService {
   private categoryRepository: CategoryRepository;
 
@@ -42,6 +80,33 @@ export class CategoryService {
   })
   async findBySlug(slug: string): Promise<Category | null> {
     return await this.categoryRepository.findBySlug(slug);
+  }
+
+  // Slug ile kategori bul (standardized response)
+  @Cache({ 
+    ttl: 300, // 5 minutes
+    keyGenerator: (slug: string) => `category:v1:response:${slug}`
+  })
+  async getCategoryBySlug(slug: string): Promise<CategoryResponse> {
+    try {
+      const category = await this.categoryRepository.findBySlug(slug);
+      if (!category) {
+        return {
+          success: false,
+          message: "Category not found",
+        };
+      }
+      return {
+        success: true,
+        message: "Category retrieved successfully",
+        category,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Category not found",
+      };
+    }
   }
 
   // İsim ile kategori bul
@@ -132,36 +197,59 @@ export class CategoryService {
   })
   async getCategoriesForAdmin(
     options: CategoryListOptions = {}
-  ): Promise<CategoryListResult> {
-    const { page = 1, limit = 10, search } = options;
+  ): Promise<CategoriesResponse> {
+    try {
+      let { page = 1, limit = 10, search } = options;
 
-    // Tüm kategorileri getir
-    const allCategories = await this.getAllCategories();
+      // Validate and sanitize pagination parameters
+      page = Math.max(1, page);
+      limit = Math.max(1, Math.min(100, limit)); // Ensure limit is between 1 and 100
 
-    // Search filtresi uygula
-    let filteredCategories = allCategories;
-    if (search) {
-      filteredCategories = allCategories.filter(
-        (category) =>
-          category.name.toLowerCase().includes(search.toLowerCase()) ||
-          category.slug.toLowerCase().includes(search.toLowerCase())
-      );
+      // Tüm kategorileri getir
+      const allCategories = await this.getAllCategories();
+
+      // Search filtresi uygula
+      let filteredCategories = allCategories;
+      if (search) {
+        filteredCategories = allCategories.filter(
+          (category) =>
+            category.name.toLowerCase().includes(search.toLowerCase()) ||
+            category.slug.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+
+      // Pagination uygula
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedCategories = filteredCategories.slice(startIndex, endIndex);
+
+      // Ensure totalPages is always a valid number (minimum 1)
+      const totalPages = Math.max(1, Math.ceil(filteredCategories.length / limit));
+
+      return {
+        success: true,
+        message: "Categories retrieved successfully",
+        categories: paginatedCategories,
+        pagination: {
+          page,
+          limit,
+          total: filteredCategories.length,
+          totalPages,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to retrieve categories",
+        categories: [],
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 1,
+        },
+      };
     }
-
-    // Pagination uygula
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedCategories = filteredCategories.slice(startIndex, endIndex);
-
-    return {
-      categories: paginatedCategories,
-      pagination: {
-        page,
-        limit,
-        total: filteredCategories.length,
-        totalPages: Math.ceil(filteredCategories.length / limit),
-      },
-    };
   }
 
   // Admin panel için ürünlerle birlikte kategori getirme
@@ -169,12 +257,34 @@ export class CategoryService {
     ttl: 300, // 5 minutes
     keyGenerator: (id: string) => `category:v1:admin:${id}`
   })
-  async getCategoryWithProductsForAdmin(id: string): Promise<Category> {
-    const category = await this.findById(id);
-    if (!category) {
-      throw new Error("Category not found");
+  async getCategoryWithProductsForAdmin(id: string): Promise<CategoryResponse> {
+    try {
+      // Validate ID format (basic UUID validation)
+      if (!id || typeof id !== 'string' || id.trim().length === 0) {
+        return {
+          success: false,
+          message: "Category not found",
+        };
+      }
+
+      const category = await this.findById(id);
+      if (!category) {
+        return {
+          success: false,
+          message: "Category not found",
+        };
+      }
+      return {
+        success: true,
+        message: "Category retrieved successfully",
+        category,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Category not found",
+      };
     }
-    return category;
   }
 
   // Kategori ürünlerini paginated olarak getir
@@ -192,34 +302,46 @@ export class CategoryService {
       limit?: number;
       inStockOnly?: boolean;
     } = {}
-  ) {
-    const { page = 1, limit = 10, inStockOnly = true } = options;
+  ): Promise<CategoryProductsResponse> {
+    try {
+      const { page = 1, limit = 10, inStockOnly = true } = options;
 
-    const category = await this.findById(categoryId);
-    if (!category) {
-      throw new Error("Category not found");
+      const category = await this.findById(categoryId);
+      if (!category) {
+        return {
+          success: false,
+          message: "Category not found",
+        };
+      }
+
+      // ProductService'i kullanarak paginated products getir
+      const { ProductService } = await import("./ProductService");
+      const productService = new ProductService();
+      const productsResult = await productService.getProductsForAdmin({
+        page,
+        limit,
+        categoryId,
+        inStockOnly,
+      });
+
+      return {
+        success: true,
+        message: "Category products retrieved successfully",
+        category: {
+          id: category.id,
+          name: category.name,
+          slug: category.slug,
+          createdAt: category.createdAt,
+          updatedAt: category.updatedAt,
+        },
+        products: productsResult.products,
+        pagination: productsResult.pagination,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to retrieve category products",
+      };
     }
-
-    // ProductService'i kullanarak paginated products getir
-    const { ProductService } = await import("./ProductService");
-    const productService = new ProductService();
-    const productsResult = await productService.getProductsForAdmin({
-      page,
-      limit,
-      categoryId,
-      inStockOnly,
-    });
-
-    return {
-      category: {
-        id: category.id,
-        name: category.name,
-        slug: category.slug,
-        createdAt: category.createdAt,
-        updatedAt: category.updatedAt,
-      },
-      products: productsResult.products,
-      pagination: productsResult.pagination,
-    };
   }
 }

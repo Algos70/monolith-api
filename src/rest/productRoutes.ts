@@ -34,25 +34,6 @@ router.get(
   }
 });
 
-// GET /products/:id - Get product by ID (public)
-router.get(
-  "/:id",
-  rateLimitMiddleware.createCatalogRateLimit(),
-  requireProductsReadPermission,
-  async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const product = await productService.getProductForAdmin(id);
-    res.json(product);
-  } catch (error) {
-    console.error("Get product error:", error);
-    if (error instanceof Error && error.message === "Product not found") {
-      return res.status(404).json({ error: error.message });
-    }
-    res.status(500).json({ error: "Failed to fetch product" });
-  }
-});
-
 // GET /products/slug/:slug - Get product by slug (public)
 router.get(
   "/slug/:slug",
@@ -74,50 +55,6 @@ router.get(
   }
 });
 
-// GET /products/category/:categoryId - Get products by category (public)
-router.get(
-  "/category/:categoryId",
-  rateLimitMiddleware.createCatalogRateLimit(),
-  requireProductsReadPermission,
-  async (req: Request, res: Response) => {
-  try {
-    const { categoryId } = req.params;
-
-    const products = await productService.findByCategoryId(categoryId);
-    res.json(products);
-  } catch (error) {
-    console.error("Get products by category error:", error);
-    res.status(500).json({ error: "Failed to fetch products by category" });
-  }
-});
-
-// GET /products/:id/availability - Check product availability
-router.get(
-  "/:id/availability",
-  rateLimitMiddleware.createCatalogRateLimit(),
-  requireProductsReadPermission,
-  async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const requiredQty = parseInt(req.query.qty as string) || 1;
-
-    const product = await productService.getProductForAdmin(id);
-    const inStock = await productService.isInStock(id, requiredQty);
-    
-    res.json({
-      productId: id,
-      available: inStock,
-      requiredQty,
-      stockQty: product.stockQty,
-    });
-  } catch (error) {
-    console.error("Product availability check error:", error);
-    if (error instanceof Error && error.message === "Product not found") {
-      return res.status(404).json({ error: error.message });
-    }
-    res.status(500).json({ error: "Failed to check product availability" });
-  }
-});
 
 // GET /products/featured - Get featured products
 router.get(

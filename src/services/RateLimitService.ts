@@ -19,13 +19,13 @@ export class RateLimitService {
   // Default rate limit configurations
   private readonly configs = {
     // General API limits
-    api: { windowMs: 60000, maxRequests: 300 }, // 300 req/min (3x)
-    auth: { windowMs: 300000, maxRequests: 15 }, // 15 req/5min for auth (3x)
-    catalog: { windowMs: 60000, maxRequests: 600 }, // 600 req/min for catalog (3x)
+    api: { windowMs: 60000, maxRequests: 400 }, // 300 req/min (3x)
+    auth: { windowMs: 900000, maxRequests: 400 }, // 300 req/15min for auth
+    catalog: { windowMs: 60000, maxRequests: 400 }, // 600 req/min for catalog (3x)
     
     // User-specific limits (higher limits for authenticated users)
-    userApi: { windowMs: 60000, maxRequests: 1500 }, // 1500 req/min (3x)
-    userCatalog: { windowMs: 60000, maxRequests: 3000 }, // 3000 req/min (3x)
+    userApi: { windowMs: 60000, maxRequests: 400 }, // 1500 req/min (3x)
+    userCatalog: { windowMs: 60000, maxRequests: 400 }, // 3000 req/min (3x)
   };
 
   constructor() {

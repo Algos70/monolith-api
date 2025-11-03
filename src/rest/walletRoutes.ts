@@ -25,14 +25,22 @@ router.get(
     try {
       const userId = getCurrentUserId(req);
       if (!userId) {
-        return res.status(401).json({ error: "User ID not found in session" });
+        return res.status(401).json({
+          success: false,
+          message: "User ID not found in session",
+          wallets: [],
+        });
       }
 
-      const wallets = await userWalletService.getUserWallets(userId);
-      res.json(wallets);
+      const result = await userWalletService.getUserWallets(userId);
+      res.json(result);
     } catch (error) {
       console.error("Get user wallets error:", error);
-      res.status(500).json({ error: "Failed to fetch wallets" });
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch wallets",
+        wallets: [],
+      });
     }
   }
 );
@@ -46,37 +54,57 @@ router.post(
     try {
       const userId = getCurrentUserId(req);
       if (!userId) {
-        return res.status(401).json({ error: "User ID not found in session" });
+        return res.status(401).json({
+          success: false,
+          message: "User ID not found in session",
+          wallet: null,
+        });
       }
 
       const { currency, initialBalance } = req.body;
 
       if (!currency) {
-        return res.status(400).json({ error: "Currency is required" });
+        return res.status(400).json({
+          success: false,
+          message: "Currency is required",
+          wallet: null,
+        });
       }
 
-      const wallet = await userWalletService.createUserWallet({
+      const result = await userWalletService.createUserWallet({
         userId,
         currency,
         initialBalance,
       });
 
-      res.status(201).json(wallet);
+      res.status(201).json(result);
     } catch (error) {
       console.error("Create wallet error:", error);
       if (error instanceof Error) {
         const validationError = error as any;
         if (validationError.code === "DUPLICATE") {
-          return res.status(409).json({ error: error.message });
+          return res.status(409).json({
+            success: false,
+            message: error.message,
+            wallet: null,
+          });
         }
         if (
           validationError.code === "INVALID_FORMAT" ||
           validationError.code === "INVALID_TYPE"
         ) {
-          return res.status(400).json({ error: error.message });
+          return res.status(400).json({
+            success: false,
+            message: error.message,
+            wallet: null,
+          });
         }
       }
-      res.status(500).json({ error: "Failed to create wallet" });
+      res.status(500).json({
+        success: false,
+        message: "Failed to create wallet",
+        wallet: null,
+      });
     }
   }
 );
@@ -90,7 +118,10 @@ router.post(
     try {
       const userId = getCurrentUserId(req);
       if (!userId) {
-        return res.status(401).json({ error: "User ID not found in session" });
+        return res.status(401).json({
+          success: false,
+          message: "User ID not found in session",
+        });
       }
 
       const { id } = req.params;
@@ -98,35 +129,51 @@ router.post(
 
       if (!amountMinor || typeof amountMinor !== "number") {
         return res.status(400).json({
-          error: "Amount (in minor units) is required and must be a number",
+          success: false,
+          message: "Amount (in minor units) is required and must be a number",
         });
       }
 
-      const updatedWallet = await userWalletService.increaseUserWalletBalance({
+      const result = await userWalletService.increaseUserWalletBalance({
         userId,
         walletId: id,
         amountMinor,
       });
 
-      res.json(updatedWallet);
+      res.json(result);
     } catch (error) {
       console.error("Increase balance error:", error);
       if (error instanceof Error) {
         const validationError = error as any;
         if (validationError.code === "FORBIDDEN") {
-          return res.status(403).json({ error: error.message });
+          return res.status(403).json({
+            success: false,
+            message: error.message,
+          });
         }
         if (validationError.code === "INVALID_TYPE") {
-          return res.status(400).json({ error: error.message });
+          return res.status(400).json({
+            success: false,
+            message: error.message,
+          });
         }
         if (validationError.code === "NOT_FOUND") {
-          return res.status(404).json({ error: error.message });
+          return res.status(404).json({
+            success: false,
+            message: error.message,
+          });
         }
         if (error.message === "Wallet not found") {
-          return res.status(404).json({ error: error.message });
+          return res.status(404).json({
+            success: false,
+            message: error.message,
+          });
         }
       }
-      res.status(500).json({ error: "Failed to increase balance" });
+      res.status(500).json({
+        success: false,
+        message: "Failed to increase balance",
+      });
     }
   }
 );
@@ -140,28 +187,46 @@ router.delete(
     try {
       const userId = getCurrentUserId(req);
       if (!userId) {
-        return res.status(401).json({ error: "User ID not found in session" });
+        return res.status(401).json({
+          success: false,
+          message: "User ID not found in session",
+        });
       }
 
       const { id } = req.params;
 
       await userWalletService.deleteUserWallet(userId, id);
-      res.status(204).send();
+      res.json({
+        success: true,
+        message: "Wallet deleted successfully",
+      });
     } catch (error) {
       console.error("Delete wallet error:", error);
       if (error instanceof Error) {
         const validationError = error as any;
         if (validationError.code === "FORBIDDEN") {
-          return res.status(403).json({ error: error.message });
+          return res.status(403).json({
+            success: false,
+            message: error.message,
+          });
         }
         if (error.message === "Wallet not found") {
-          return res.status(404).json({ error: error.message });
+          return res.status(404).json({
+            success: false,
+            message: error.message,
+          });
         }
         if (error.message === "Cannot delete wallet with positive balance") {
-          return res.status(409).json({ error: error.message });
+          return res.status(409).json({
+            success: false,
+            message: error.message,
+          });
         }
       }
-      res.status(500).json({ error: "Failed to delete wallet" });
+      res.status(500).json({
+        success: false,
+        message: "Failed to delete wallet",
+      });
     }
   }
 );
@@ -175,19 +240,26 @@ router.post(
     try {
       const userId = getCurrentUserId(req);
       if (!userId) {
-        return res.status(401).json({ error: "User ID not found in session" });
+        return res.status(401).json({
+          success: false,
+          message: "User ID not found in session",
+        });
       }
 
       const { toWalletId, currency, amountMinor } = req.body;
 
       if (!toWalletId || !currency || !amountMinor) {
         return res.status(400).json({
-          error: "Target wallet ID, currency, and amount are required",
+          success: false,
+          message: "Target wallet ID, currency, and amount are required",
         });
       }
 
       if (typeof amountMinor !== "number") {
-        return res.status(400).json({ error: "Amount must be a number" });
+        return res.status(400).json({
+          success: false,
+          message: "Amount must be a positive number",
+        });
       }
 
       await userWalletService.transferFromUserWallet({
@@ -197,7 +269,10 @@ router.post(
         amountMinor,
       });
 
-      res.json({ message: "Transfer completed successfully" });
+      res.json({
+        success: true,
+        message: "Transfer completed successfully",
+      });
     } catch (error) {
       console.error("Transfer error:", error);
       if (error instanceof Error) {
@@ -206,16 +281,28 @@ router.post(
           validationError.code === "INVALID_TYPE" ||
           validationError.code === "INVALID_OPERATION"
         ) {
-          return res.status(400).json({ error: error.message });
+          return res.status(400).json({
+            success: false,
+            message: error.message,
+          });
         }
         if (validationError.code === "NOT_FOUND") {
-          return res.status(404).json({ error: error.message });
+          return res.status(404).json({
+            success: false,
+            message: error.message,
+          });
         }
         if (validationError.code === "INSUFFICIENT_BALANCE") {
-          return res.status(400).json({ error: error.message });
+          return res.status(400).json({
+            success: false,
+            message: error.message,
+          });
         }
       }
-      res.status(500).json({ error: "Failed to complete transfer" });
+      res.status(500).json({
+        success: false,
+        message: "Failed to complete transfer",
+      });
     }
   }
 );
@@ -229,23 +316,27 @@ router.get(
     try {
       const userId = getCurrentUserId(req);
       if (!userId) {
-        return res.status(401).json({ error: "User ID not found in session" });
+        return res.status(401).json({
+          success: false,
+          message: "User ID not found in session",
+          wallet: null,
+        });
       }
 
       const { currency } = req.params;
-      const wallet = await userWalletService.getUserWalletByCurrency(
+      const result = await userWalletService.getUserWalletByCurrency(
         userId,
         currency
       );
 
-      if (!wallet) {
-        return res.status(404).json({ error: "Wallet not found" });
-      }
-
-      res.json(wallet);
+      res.json(result);
     } catch (error) {
       console.error("Get wallet by currency error:", error);
-      res.status(500).json({ error: "Failed to fetch wallet" });
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch wallet",
+        wallet: null,
+      });
     }
   }
 );
@@ -259,18 +350,31 @@ router.get(
     try {
       const userId = getCurrentUserId(req);
       if (!userId) {
-        return res.status(401).json({ error: "User ID not found in session" });
+        return res.status(401).json({
+          success: false,
+          message: "User ID not found in session",
+          balance: "0",
+        });
       }
 
       const { currency } = req.params;
-      const balance = await userWalletService.getUserWalletBalance(
+      const result = await userWalletService.getUserWalletBalance(
         userId,
         currency
       );
-      res.json({ balance, currency, userId });
+      
+      res.json({
+        success: result.success,
+        message: result.message,
+        balance: result.balance.toString(),
+      });
     } catch (error) {
       console.error("Get balance error:", error);
-      res.status(500).json({ error: "Failed to get balance" });
+      res.status(500).json({
+        success: false,
+        message: "Failed to get wallet balance",
+        balance: "0",
+      });
     }
   }
 );
