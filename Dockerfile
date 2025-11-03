@@ -14,6 +14,9 @@ RUN npm run build
 FROM node:22-alpine
 WORKDIR /app
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
 # 3. Build çıktısını ve bağımlılıkları taşı
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/migrations ./migrations
