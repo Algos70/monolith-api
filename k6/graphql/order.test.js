@@ -1,10 +1,11 @@
 import { sleep } from "k6";
 import { OrderService } from "./services/order-service.js";
-import { CartService } from "./services/cart-service.js";
+import { CartService } from "../shared/cart-service.js";
 import { ProductService } from "../shared/product-service.js";
 import { WalletService } from "./services/wallet-service.js";
 import { GraphQLClient } from "./utils/graphql-client.js";
 import { PRODUCT_QUERIES } from "./queries/product-queries.js";
+import { CART_QUERIES } from "./queries/cart-queries.js";
 import { TEST_CONFIG } from "../config/test-config.js";
 import { setupAuth } from "./utils/test-base.js";
 
@@ -19,7 +20,8 @@ export default async function () {
   // Create services with authenticated session
   const client = new GraphQLClient();
   const orderService = new OrderService(undefined, sessionHeaders);
-  const cartService = new CartService(undefined, sessionHeaders);
+  const cartService = new CartService(client, CART_QUERIES);
+  cartService.setSessionHeaders(sessionHeaders);
   const productService = new ProductService(client, PRODUCT_QUERIES);
   productService.setSessionHeaders(sessionHeaders);
   const walletService = new WalletService(undefined, sessionHeaders);

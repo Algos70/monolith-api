@@ -113,9 +113,7 @@ export class ProductService {
 
     const graphqlVariables = this.isGraphQLClient ? variables : {};
     const response = this.makeRequest(query, graphqlVariables);
-
-
-
+    
     // Handle response based on client type
     const responseData = this.isGraphQLClient 
       ? response.parsed?.data?.productBySlug

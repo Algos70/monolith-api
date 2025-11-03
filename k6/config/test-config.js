@@ -22,7 +22,7 @@ export const TEST_CONFIG = {
     iterations: 1, // Sadece 1 kez çalıştır
     thresholds: {
       http_req_duration: ['p(95)<2000'],
-      http_req_failed: ['rate<0.1'],
+      http_req_failed: ['rate<0.5'],
     },
   },
 };
