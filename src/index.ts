@@ -28,7 +28,7 @@ import { typeDefs, resolvers } from "./graphql";
 import { rateLimitMiddleware } from "./cache/RateLimitMiddleware";
 import { createGraphQLRateLimitPlugin } from "./graphql/plugins/rateLimitPlugin";
 import { formatError } from "./graphql/utils/errorFormatter";
-import { DatabaseSeeder } from "./repositories/seeds";
+
 
 config();
 
@@ -81,13 +81,7 @@ const startServer = async () => {
     await AppDataSource.initialize();
     console.log("📊 Database connected successfully");
 
-    // Run pending migrations automatically
-    console.log("🔄 Running database migrations...");
-    await AppDataSource.runMigrations();
-    console.log("✅ Database migrations completed successfully");
-
-    // Run database seeding (only once)
-    await DatabaseSeeder.run();
+    // Migrations and seeding are now handled by npm scripts before starting the server
 
     // Initialize Redis connection
     const redis = RedisClient.getInstance();

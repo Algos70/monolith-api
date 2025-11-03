@@ -1,11 +1,16 @@
 {
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev": "npm run db:setup:dev && ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "start": "node dist/src/index.js",
+    "start": "npm run db:setup && node dist/src/index.js",
+    "db:setup": "npm run migrate && npm run seed",
+    "db:setup:dev": "npm run migrate:dev && npm run seed:dev",
+    "migrate": "typeorm migration:run -d typeorm.config.js",
+    "migrate:dev": "typeorm-ts-node-commonjs migration:run -d typeorm.config.ts",
+    "seed": "node dist/src/repositories/seeds/runSeeds.js",
+    "seed:dev": "ts-node src/repositories/seeds/runSeeds.ts",
     "migration:generate": "typeorm-ts-node-commonjs migration:generate -d typeorm.config.ts",
     "migration:create": "typeorm-ts-node-commonjs migration:create",
-    "migration:run": "typeorm-ts-node-commonjs migration:run -d typeorm.config.ts",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d typeorm.config.ts",
     "migration:show": "typeorm-ts-node-commonjs migration:show -d typeorm.config.ts"
   },
