@@ -1,26 +1,24 @@
 import { sleep } from "k6";
 import { WalletService } from "../shared/wallet-service.js";
-import { GraphQLClient } from "./utils/graphql-client.js";
-import { WALLET_QUERIES, WALLET_MUTATIONS } from "./queries/wallet-queries.js";
+import { RestClient } from "./utils/rest-client.js";
 import { TEST_CONFIG } from "../config/test-config.js";
 import { setupAuth } from "./utils/test-base.js";
 
 export const options = TEST_CONFIG.SMOKE_TEST_OPTIONS;
 
 export default async function () {
-  console.log("Starting Wallet User Queries Tests");
-  console.log("==========================================");
+  console.log("Starting Wallet REST API Tests");
+  console.log("==============================");
 
   const { sessionHeaders } = setupAuth();
 
-  // Create GraphQL client and wallet service with authenticated session
-  const client = new GraphQLClient();
-  const queries = { ...WALLET_QUERIES, ...WALLET_MUTATIONS };
-  const walletService = new WalletService(client, queries);
+  // Create REST client and wallet service with authenticated session
+  const client = new RestClient();
+  const walletService = new WalletService(client, null); // No queries needed for REST
   walletService.setSessionHeaders(sessionHeaders);
 
   // Run comprehensive wallet workflow test - this covers all main wallet operations
-  // Creates USD wallet, tests all queries, increases balance, and verifies operations
+  // Creates USD wallet, tests all endpoints, increases balance, and verifies operations
   await walletService.runWalletWorkflowTest();
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
@@ -36,7 +34,6 @@ export default async function () {
   await walletService.runNegativeFlowTests();
   sleep(TEST_CONFIG.TIMEOUTS.DEFAULT_SLEEP);
 
-
-  console.log("Wallet User Tests Completed");
-  console.log("==========================================");
+  console.log("Wallet REST API Tests Completed");
+  console.log("==============================");
 }

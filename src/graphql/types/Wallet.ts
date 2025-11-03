@@ -136,7 +136,7 @@ export const walletTypeDefs = `
     increaseUserWalletBalance(walletId: ID!, input: BalanceOperationInput!): UserWalletOperationResult!
     
     # Delete user's own wallet
-    deleteUserWallet(walletId: ID!): Boolean!
+    deleteUserWallet(walletId: ID!): UserWalletOperationResult!
     
     # Transfer money from user's wallet to another wallet
     transferFromUserWallet(input: UserTransferInput!): TransferResponse!

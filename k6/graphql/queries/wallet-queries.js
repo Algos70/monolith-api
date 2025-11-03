@@ -93,7 +93,10 @@ export const WALLET_MUTATIONS = {
 
   DELETE_USER_WALLET: `
     mutation DeleteUserWallet($walletId: ID!) {
-      deleteUserWallet(walletId: $walletId)
+      deleteUserWallet(walletId: $walletId) {
+        success
+        message
+      }
     }
   `,
 
