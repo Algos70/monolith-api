@@ -3,7 +3,6 @@ name: API & Integration Tests (Compose)
 on:
   push:
     branches: [ dev, main ]
-  pull_request:
 
 jobs:
   test:
